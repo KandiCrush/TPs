@@ -16,6 +16,11 @@ const tps = [
         href: "/lois-de-probabilite",
     },
     {
+        title: "Finance App",
+        description: "Application de finance (simulation de prêt, tableau d'amortissement, etc.)",
+        href: "/finance",
+    },
+    {
         title: "Tableau d’amortissement",
         description: "Calcul de crédit et génération du tableau",
         href: "/tableau-d-amortissement",

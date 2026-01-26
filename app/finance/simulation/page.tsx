@@ -18,7 +18,6 @@ import {
 } from "@/src/components/ui/table";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import { Badge } from "@/src/components/ui/badge";
 import { Switch } from "@/src/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/src/components/ui/radio-group";
 import { Separator } from "@/src/components/ui/separator";
@@ -31,60 +30,19 @@ import { useState } from "react";
 import {
     FileDown,
     FileSpreadsheet,
-    History,
     RefreshCw,
     Save,
-    Plus,
-    Eye,
-    Copy,
-    Trash2,
     Calculator,
 } from "lucide-react";
 
 type TauxType = "annuel" | "mensuel";
-type SimulationStatus = "validated" | "draft" | "deleted";
 
-interface SimulationHistory {
-    id: string;
-    date: string;
-    montant: number;
-    taux: number;
-    duree: number;
-    status: SimulationStatus;
-}
-
-export default function Page() {
+export default function SimulationPage() {
     const [table, setTable] = useState<AmortissementRow[] | null>(null);
     const [param, setParam] = useState<Props | null>(null);
     const [tauxType, setTauxType] = useState<TauxType>("annuel");
     const [insuranceEnabled, setInsuranceEnabled] = useState(false);
     const [insuranceRate, setInsuranceRate] = useState("");
-    const [simulationHistory] = useState<SimulationHistory[]>([
-        {
-            id: "1",
-            date: "2026-01-20",
-            montant: 100000,
-            taux: 3.5,
-            duree: 240,
-            status: "validated",
-        },
-        {
-            id: "2",
-            date: "2026-01-18",
-            montant: 50000,
-            taux: 4.2,
-            duree: 120,
-            status: "draft",
-        },
-        {
-            id: "3",
-            date: "2026-01-15",
-            montant: 200000,
-            taux: 2.8,
-            duree: 300,
-            status: "validated",
-        },
-    ]);
 
     const getFormData = async (form: HTMLFormElement) => {
         const formData = new FormData(form);
@@ -97,7 +55,6 @@ export default function Page() {
         };
 
         try {
-            // Convertir le taux selon le type sélectionné
             let tauxMensuel = 0;
             if (data.taux) {
                 const tauxValue = Number(data.taux);
@@ -126,22 +83,15 @@ export default function Page() {
         setInsuranceRate("");
     };
 
-    const handleNewSimulation = () => {
-        handleReset();
-    };
-
     const handleSaveSimulation = () => {
-        // UI only - pas d'implémentation backend
         console.log("Simulation sauvegardée (UI only)");
     };
 
     const handleExportPDF = () => {
-        // UI only
         console.log("Export PDF (UI only)");
     };
 
     const handleExportExcel = () => {
-        // UI only
         console.log("Export Excel (UI only)");
     };
 
@@ -149,26 +99,6 @@ export default function Page() {
         if (!insuranceEnabled || !insuranceRate || !param?.montant) return 0;
         const rate = Number(insuranceRate) / 100;
         return (param.montant * rate) / 12;
-    };
-
-    const getStatusBadge = (status: SimulationStatus) => {
-        const variants = {
-            validated: "default",
-            draft: "secondary",
-            deleted: "destructive",
-        } as const;
-
-        const labels = {
-            validated: "Validé",
-            draft: "Brouillon",
-            deleted: "Supprimé",
-        };
-
-        return (
-            <Badge variant={variants[status] || "default"}>
-                {labels[status]}
-            </Badge>
-        );
     };
 
     const totalInterest =
@@ -182,35 +112,20 @@ export default function Page() {
             : 0;
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="flex flex-col h-full">
             {/* Header */}
-            <header className="border-b bg-card">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Calculator className="h-6 w-6 text-primary" />
-                            <h1 className="text-2xl font-bold">
-                                Simulateur de Prêt Immobilier
-                            </h1>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleNewSimulation}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nouvelle simulation
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <div className="border-b bg-card px-6 py-4">
+                <h1 className="text-2xl font-bold">Nouvelle simulation</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Créez un nouveau tableau d&apos;amortissement
+                </p>
+            </div>
 
-            <main className="container mx-auto px-4 py-6">
-                <div className="grid gap-6 lg:grid-cols-3">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex flex-col gap-6 lg:flex-row">
                     {/* Left Column - Form */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="w-full lg:w-1/3 flex gap-6 flex-col">
                         {/* Simulation Form */}
                         <Card>
                             <CardHeader>
@@ -234,9 +149,7 @@ export default function Page() {
                                         <RadioGroup
                                             value={tauxType}
                                             onValueChange={(value) =>
-                                                setTauxType(
-                                                    value as TauxType
-                                                )
+                                                setTauxType(value as TauxType)
                                             }
                                             className="flex gap-6"
                                         >
@@ -277,7 +190,8 @@ export default function Page() {
                                     {/* Montant */}
                                     <div className="space-y-2">
                                         <Label htmlFor="montant">
-                                            Montant emprunté <span className="text-destructive">*</span>
+                                            Montant emprunté{" "}
+                                            <span className="text-destructive">*</span>
                                         </Label>
                                         <Input
                                             id="montant"
@@ -300,7 +214,12 @@ export default function Page() {
                                     {/* Taux */}
                                     <div className="space-y-2">
                                         <Label htmlFor="taux">
-                                            Taux d&apos;intérêt ({tauxType === "annuel" ? "annuel" : "mensuel"}) <span className="text-destructive">*</span>
+                                            Taux d&apos;intérêt (
+                                            {tauxType === "annuel"
+                                                ? "annuel"
+                                                : "mensuel"}
+                                            ){" "}
+                                            <span className="text-destructive">*</span>
                                         </Label>
                                         <Input
                                             id="taux"
@@ -308,7 +227,9 @@ export default function Page() {
                                             type="number"
                                             step={0.01}
                                             min={0}
-                                            max={tauxType === "annuel" ? 100 : 10}
+                                            max={
+                                                tauxType === "annuel" ? 100 : 10
+                                            }
                                             placeholder={
                                                 tauxType === "annuel"
                                                     ? "Ex: 3.5"
@@ -334,7 +255,8 @@ export default function Page() {
                                     {/* Durée */}
                                     <div className="space-y-2">
                                         <Label htmlFor="duree">
-                                            Durée (en mois) <span className="text-destructive">*</span>
+                                            Durée (en mois){" "}
+                                            <span className="text-destructive">*</span>
                                         </Label>
                                         <Input
                                             id="duree"
@@ -440,7 +362,7 @@ export default function Page() {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex gap-3 pt-4">
+                                    <div className="flex flex-col gap-3 pt-4">
                                         <Button
                                             type="submit"
                                             className="flex-1"
@@ -449,7 +371,9 @@ export default function Page() {
                                             <Calculator className="mr-2 h-4 w-4" />
                                             Générer le tableau
                                         </Button>
+                                        <section className="flex gap-3 flex-row">
                                         <Button
+                                        className="flex-1"
                                             type="button"
                                             variant="outline"
                                             onClick={handleReset}
@@ -459,6 +383,7 @@ export default function Page() {
                                         </Button>
                                         {table && (
                                             <Button
+                                                className="flex-1"
                                                 type="button"
                                                 variant="outline"
                                                 onClick={handleSaveSimulation}
@@ -467,105 +392,12 @@ export default function Page() {
                                                 Sauvegarder
                                             </Button>
                                         )}
+                                        </section>
                                     </div>
                                 </form>
                             </CardContent>
                         </Card>
 
-                        {/* Results Table */}
-                        {table && (
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle>Tableau d&apos;amortissement</CardTitle>
-                                            <CardDescription>
-                                                Détail mensuel du remboursement
-                                                du prêt
-                                            </CardDescription>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleExportPDF}
-                                            >
-                                                <FileDown className="mr-2 h-4 w-4" />
-                                                PDF
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleExportExcel}
-                                            >
-                                                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                                Excel
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="rounded-md border">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Mois</TableHead>
-                                                    <TableHead className="text-right">
-                                                        Intérêt
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Mensualité
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Amortissement
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Capital restant dû
-                                                    </TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {table.map((row) => (
-                                                    <TableRow key={row.mois}>
-                                                        <TableCell>
-                                                            {row.mois}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {row.interet.toFixed(
-                                                                2
-                                                            )}{" "}
-                                                            €
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {row.mensualite.toFixed(
-                                                                2
-                                                            )}{" "}
-                                                            €
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {row.amortissement.toFixed(
-                                                                2
-                                                            )}{" "}
-                                                            €
-                                                        </TableCell>
-                                                        <TableCell className="text-right font-semibold">
-                                                            {row.capitalRestant.toFixed(
-                                                                2
-                                                            )}{" "}
-                                                            €
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-
-                    {/* Right Column - Summary & History */}
-                    <div className="space-y-6">
                         {/* Summary Card */}
                         {table && param && (
                             <Card>
@@ -663,89 +495,120 @@ export default function Page() {
                                 </CardContent>
                             </Card>
                         )}
+                    </div>
 
-                        {/* History Card */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <History className="h-5 w-5" />
-                                    <CardTitle>Historique</CardTitle>
-                                </div>
-                                <CardDescription>
-                                    Vos simulations précédentes
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {simulationHistory.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-4">
-                                        Aucune simulation sauvegardée
-                                    </p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {simulationHistory.map((sim) => (
-                                            <div
-                                                key={sim.id}
-                                                className="p-3 border rounded-lg space-y-2 hover:bg-muted/50 transition-colors"
+                    {/* Right Column - Summary */}
+                    <div className="flex-1 space-y-6">
+                        {/* Results Table */}
+                        {!table && (
+                            <Card className="flex-1 h-full">
+                                <CardHeader>
+                                    <CardTitle>Tableau d&apos;amortissement</CardTitle>
+                                    <CardDescription>
+                                        Détail mensuel du remboursement
+                                        du prêt
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 flex items-center justify-center">
+                                    <p className="text-center text-muted-foreground">Le tableau d&apos;amortissement sera affiché ici une fois l&apos;opération effectuée</p>
+                                </CardContent>
+                            </Card>
+                        )}
+{table && (
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>
+                                                Tableau d&apos;amortissement
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Détail mensuel du remboursement
+                                                du prêt
+                                            </CardDescription>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleExportPDF}
                                             >
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-medium">
-                                                            {sim.montant.toLocaleString()}{" "}
-                                                            €
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {sim.taux}% - {sim.duree}{" "}
-                                                            mois
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground mt-1">
-                                                            {new Date(
-                                                                sim.date
-                                                            ).toLocaleDateString(
-                                                                "fr-FR"
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        {getStatusBadge(
-                                                            sim.status
-                                                        )}
-                                                        <div className="flex gap-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Voir"
-                                                            >
-                                                                <Eye className="h-3 w-3" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Dupliquer"
-                                                            >
-                                                                <Copy className="h-3 w-3" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                                                title="Supprimer"
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                                <FileDown className="mr-2 h-4 w-4" />
+                                                PDF
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleExportExcel}
+                                            >
+                                                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                                Excel
+                                            </Button>
+                                        </div>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Mois</TableHead>
+                                                    <TableHead className="text-right">
+                                                        Intérêt
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
+                                                        Mensualité
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
+                                                        Amortissement
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
+                                                        Capital restant dû
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {table.map((row) => (
+                                                    <TableRow key={row.mois}>
+                                                        <TableCell>
+                                                            {row.mois}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {row.interet.toFixed(
+                                                                2
+                                                            )}{" "}
+                                                            €
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {row.mensualite.toFixed(
+                                                                2
+                                                            )}{" "}
+                                                            €
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {row.amortissement.toFixed(
+                                                                2
+                                                            )}{" "}
+                                                            €
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-semibold">
+                                                            {row.capitalRestant.toFixed(
+                                                                2
+                                                            )}{" "}
+                                                            €
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }
