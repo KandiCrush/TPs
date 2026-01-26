@@ -1,0 +1,22 @@
+- taux 
+    > annuel (négatif); 
+    > mensuel (précision mathématique conversion)
+
+- assurance solde restant dû
+- proposer la version imprimé (PDF/Excel)
+- historique / vider (deleted: true or false, validate:)
+- PDF dans un workspace(repository)
+- Gérer les données obligatoires
+- store procedure qui génère des simulations
+- Tableau de bord
+- Vider la page
+
+- tables : enumOperateur, descClient, simulation, simulationDetail
+    relation tercière -> taux, date de traitement, ...
+    détails -> chiffres (simDetailPDF) ou PDF (simDetailPDF)
+
+Questions : 
+    1. Faudrait-il avoir peur de l'IA dans le business ?
+    2. Réglementation sur l'IA par les Européens (RGPD). Est-ce applicable dans notre pays (utilité) ?
+    3. Expliquez DORA, analysez son application en RDC (banque centrale), point de vu personnel.
+    4. Application (assurance vie)
