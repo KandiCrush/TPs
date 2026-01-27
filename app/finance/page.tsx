@@ -1,6 +1,9 @@
-"use client";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import {
@@ -15,7 +18,6 @@ import {
     Calculator,
     History,
     FileText,
-    TrendingUp,
     CheckCircle2,
     FileX,
     Edit,
@@ -94,13 +96,11 @@ const getStatusBadge = (status: SimulationStatus) => {
     };
 
     return (
-        <Badge variant={variants[status] || "default"}>
-            {labels[status]}
-        </Badge>
+        <Badge variant={variants[status] || "default"}>{labels[status]}</Badge>
     );
 };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -255,8 +255,10 @@ export default function DashboardPage() {
                                             <TableRow key={sim.id}>
                                                 <TableCell>
                                                     {new Date(
-                                                        sim.date
-                                                    ).toLocaleDateString("fr-FR")}
+                                                        sim.date,
+                                                    ).toLocaleDateString(
+                                                        "fr-FR",
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     {sim.montant.toLocaleString()}{" "}

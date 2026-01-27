@@ -17,7 +17,8 @@ const tps = [
     },
     {
         title: "Finance App",
-        description: "Application de finance (simulation de prêt, tableau d'amortissement, etc.)",
+        description:
+            "Application de finance (simulation de prêt, tableau d'amortissement, etc.)",
         href: "/finance",
     },
     {
@@ -40,7 +41,7 @@ export default function Page() {
                                     {tp.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="text-sm text-muted-foreground">
+                            <CardContent className="text-sm text-muted-foreground truncate">
                                 {tp.description}
                             </CardContent>
                         </Card>
