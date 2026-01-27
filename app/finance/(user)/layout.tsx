@@ -6,9 +6,9 @@ export default function FinanceLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+        <div className="flex h-screen overflow-hidden">
             <FinanceSidebar />
-            <main className="flex-1 overflow-y-auto bg-background">
+            <main className="flex-1 min-h-sreen overflow-y-auto bg-background">
                 {children}
             </main>
         </div>

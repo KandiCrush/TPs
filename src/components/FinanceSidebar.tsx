@@ -38,7 +38,7 @@ export function FinanceSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full w-64 flex-col border-r bg-card">
+        <div className="flex h-screen w-64 flex-col border-r bg-card">
             {/* Logo/Header */}
             <div className="flex h-16 items-center border-b px-6">
                 <div className="flex items-center gap-2">

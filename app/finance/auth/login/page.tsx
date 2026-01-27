@@ -12,10 +12,12 @@ import { Label } from "@/src/components/ui/label";
 import { Button } from "@/src/components/ui/button";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     // Soumission purement UI : aucun appel API ni logique d'authentification
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -24,6 +26,7 @@ export default function LoginPage() {
 
         // Simulation d'un court délai réseau pour le feedback visuel
         window.setTimeout(() => {
+            router.push('/finance')
             setIsLoading(false);
         }, 1200);
     };
@@ -184,11 +187,19 @@ export default function LoginPage() {
                             </div>
                         </form>
 
-                        <div className="text-center text-xs text-slate-500">
+                        <div className="text-center text-xs text-slate-500">Vous n&apos;avez pas encore de compte ?{" "}
+                            <span
+                                className="cursor-pointer text-emerald-400 hover:underline"
+                                onClick={() => router.push("/finance/auth/register")}
+                            >
+                                S&apos;inscrire
+                            </span> <br />
                             Accès réservé aux opérateurs autorisés. Les
                             tentatives d&apos;accès non autorisées peuvent être
-                            consignées.
+                            consignées. 
                         </div>
+
+                        
                     </CardContent>
                 </Card>
             </div>

@@ -29,16 +29,32 @@ enum DocumentType {
   EXCEL
 }
 
+
+model User {
+  id            String    @id
+  email         String
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  operateur     Operateur?
+
+  @@unique([email])
+  @@map("user")
+}
+
 model Operateur {
   id         String  @id @default(uuid())
-  nom        String
-  email      String  @unique
-  motDePasse String
-  actif      Boolean @default(true)
+  nom       String
+  prenom    String
+
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
 
   simulations SimulationSession[]
 
-  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
@@ -104,4 +120,52 @@ model SimulationDocument {
   result   SimulationResult @relation(fields: [resultId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { HomeIcon } from "lucide-react";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -26,14 +27,18 @@ export default function RootLayout({
     return (
         <html lang="fr" className="h-screen overflow-hidden">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} relative antialiased`}
             >
-                <header className="w-full flex p-4 fixed top-0 left-0 bg-background border-b z-10">
-                    <Link href={"/"} className="text-3xl font-bold">
-                        Mes TPs
+                <header className="absolute top-2 right-2 flex px-4 bg-background border z-10 rounded-lg shadow-md h-12 items-center hover:shadow-lg transition-shadow cursor-pointor">
+                    <Link
+                        href={"/"}
+                        className="text-lg flex items-center gap-2"
+                    >
+                        <HomeIcon />
+                        Home
                     </Link>
                 </header>
-                <main className="pt-16">{children}</main>
+                <main>{children}</main>
             </body>
         </html>
     );
