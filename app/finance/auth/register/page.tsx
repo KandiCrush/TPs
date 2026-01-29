@@ -10,32 +10,71 @@ import {
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Button } from "@/src/components/ui/button";
-import {
-    Eye,
-    EyeOff,
-    Loader2,
-    Lock,
-    Mail,
-    User,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signUpSchema } from "@/src/lib/z-schema";
+import { signUp } from "@/src/lib/auth-client";
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<Record<string, string[]> | null>(null);
     const router = useRouter();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
 
-        // Simulation UI
-        window.setTimeout(() => {
-            router.push("/finance/finance");
+        const formData = new FormData(event.currentTarget);
+
+        const fields = {
+            nom: formData.get("nom"),
+            prenom: formData.get("prenom"),
+            email: formData.get("email"),
+            password: formData.get("password"),
+            confirmPassword: formData.get("confirmPassword"),
+        };
+
+        // Vérification du mot de passe
+        if (fields.password !== fields.confirmPassword) {
+            setError({ message: ["Les mots de passe ne correspondent pas"] });
             setIsLoading(false);
-        }, 1200);
+            return;
+        }
+
+        // Validation des données
+        const validatedFields = signUpSchema.safeParse(fields);
+        if (!validatedFields.success) {
+            setError(validatedFields.error.flatten().fieldErrors);
+            setIsLoading(false);
+            return;
+        }
+
+        // Création du compte
+        await signUp.email(
+            {
+                email: String(fields.email),
+                name: String(fields.nom) + " " + String(fields.prenom),
+                password: String(fields.password),
+            },
+            {
+                onSuccess: async () => {
+                    await fetch("/api/operateur/create", { method: "POST" });
+
+                    router.push("/finance");
+                    router.refresh();
+                    setIsLoading(false);
+                },
+                onError: (ctx) => {
+                    setError({
+                        message: [ctx.error.message],
+                    });
+                    setIsLoading(false);
+                },
+            },
+        );
     };
 
     return (
@@ -60,12 +99,12 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="rounded-lg border border-slate-800/80 bg-slate-900/40 p-4 text-sm text-slate-300/80">
-                        Les comptes sont réservés au personnel autorisé.
-                        Toute création est susceptible d’être auditée.
+                        Les comptes sont réservés au personnel autorisé. Toute
+                        création est susceptible d’être auditée.
                     </div>
                 </div>
             </div>
-            
+
             {/* Right side – register form */}
             <div className="flex items-center justify-center px-4 py-10 lg:px-8">
                 <Card className="w-full max-w-md shadow-sm transition-all duration-300 hover:border-emerald-500/60 hover:shadow-emerald-900/40">
@@ -73,9 +112,12 @@ export default function RegisterPage() {
                         <CardTitle className="text-2xl tracking-tight text-center">
                             Création de compte
                         </CardTitle>
-                        <CardDescription>
-                            Renseignez les informations nécessaires pour créer
-                            votre compte opérateur.
+                        <CardDescription
+                            className={error ? "text-red-500" : ""}
+                        >
+                            {error
+                                ? Object.values(error).join(", ")
+                                : "Renseignez les informations nécessaires pour créer votre compte opérateur."}
                         </CardDescription>
                     </CardHeader>
 
@@ -85,33 +127,41 @@ export default function RegisterPage() {
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {/* Nom */}
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-medium">Nom</Label>
+                                    <Label className="text-xs font-medium">
+                                        Nom
+                                    </Label>
                                     <div className="relative">
                                         <User className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
                                         <Input
                                             placeholder="Dupont"
                                             className="pl-10"
+                                            name="nom"
                                             required
                                         />
                                     </div>
                                     <p className="text-[11px] text-slate-400">
-                                        Nom de famille tel qu’enregistré dans l’entreprise.
+                                        Nom de famille tel qu’enregistré dans
+                                        l’entreprise.
                                     </p>
                                 </div>
 
                                 {/* Prénom */}
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-medium">Prénom</Label>
+                                    <Label className="text-xs font-medium">
+                                        Prénom
+                                    </Label>
                                     <div className="relative">
                                         <User className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
                                         <Input
                                             placeholder="Jean"
                                             className="pl-10"
+                                            name="prenom"
                                             required
                                         />
                                     </div>
                                     <p className="text-[11px] text-slate-400">
-                                        Prénom utilisé pour l’identification interne.
+                                        Prénom utilisé pour l’identification
+                                        interne.
                                     </p>
                                 </div>
                             </div>
@@ -127,11 +177,13 @@ export default function RegisterPage() {
                                         type="email"
                                         placeholder="operateur@banque.com"
                                         className="pl-10"
+                                        name="email"
                                         required
                                     />
                                 </div>
                                 <p className="text-[11px] text-slate-400">
-                                    Cet email servira d’identifiant de connexion.
+                                    Cet email servira d’identifiant de
+                                    connexion.
                                 </p>
                             </div>
 
@@ -144,13 +196,21 @@ export default function RegisterPage() {
                                     <div className="relative">
                                         <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
                                         <Input
-                                            type={showPassword ? "text" : "password"}
+                                            type={
+                                                showPassword
+                                                    ? "text"
+                                                    : "password"
+                                            }
                                             className="pl-10 pr-10"
+                                            name="password"
+                                            autoComplete=""
                                             required
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
+                                            onClick={() =>
+                                                setShowPassword(!showPassword)
+                                            }
                                             className="absolute right-1 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
                                         >
                                             {showPassword ? (
@@ -161,7 +221,8 @@ export default function RegisterPage() {
                                         </button>
                                     </div>
                                     <p className="text-[11px] text-slate-400">
-                                        Minimum 8 caractères. Évite les informations personnelles.
+                                        Minimum 8 caractères. Évite les
+                                        informations personnelles.
                                     </p>
                                 </div>
 
@@ -173,14 +234,21 @@ export default function RegisterPage() {
                                     <div className="relative">
                                         <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
                                         <Input
-                                            type={showConfirmPassword ? "text" : "password"}
+                                            type={
+                                                showConfirmPassword
+                                                    ? "text"
+                                                    : "password"
+                                            }
                                             className="pl-10 pr-10"
+                                            name="confirmPassword"
                                             required
                                         />
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setShowConfirmPassword(!showConfirmPassword)
+                                                setShowConfirmPassword(
+                                                    !showConfirmPassword,
+                                                )
                                             }
                                             className="absolute right-1 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
                                         >
@@ -212,12 +280,13 @@ export default function RegisterPage() {
                             </Button>
                         </form>
 
-
                         <div className="text-center text-xs text-slate-500">
                             Un compte existe déjà ?{" "}
                             <span
                                 className="cursor-pointer text-emerald-400 hover:underline"
-                                onClick={() => router.push("/finance/auth/login")}
+                                onClick={() =>
+                                    router.push("/finance/auth/login")
+                                }
                             >
                                 Se connecter
                             </span>

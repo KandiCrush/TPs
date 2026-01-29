@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { HomeIcon } from "lucide-react";
+import { Toaster } from "@/src/components/ui/sonner";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -29,7 +30,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} relative antialiased`}
             >
-                <header className="absolute top-2 right-2 flex px-4 bg-background border z-10 rounded-lg shadow-md h-12 items-center hover:shadow-lg transition-shadow cursor-pointor">
+                <header className="absolute top-2 right-2 flex px-4 bg-background border z-10 rounded-lg shadow-md h-12 items-center hover:shadow-lg transition-shadow cursor-pointor opacity-0 hover:opacity-100 transition z-99">
                     <Link
                         href={"/"}
                         className="text-lg flex items-center gap-2"
@@ -39,6 +40,7 @@ export default function RootLayout({
                     </Link>
                 </header>
                 <main>{children}</main>
+                <Toaster />
             </body>
         </html>
     );
