@@ -12,3 +12,10 @@ export const signUpSchema = z.object({
         .string("Votre mot de passe est invalide")
         .min(8, "Votre mot de passe doit contenir au moins 8 caractères"),
 });
+
+export const signInSchema = z.object({
+    email: z.email("Votre adresse email est invalid"),
+    password: z
+        .string("Votre mot de passe est invalide")
+        .min(8, "Votre mot de passe doit contenir au moins 8 caractères"),
+});

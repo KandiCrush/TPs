@@ -13,22 +13,55 @@ import { Button } from "@/src/components/ui/button";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "@/src/lib/auth-client";
+import { signInSchema } from "@/src/lib/z-schema";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<Record<string, string[]> | null>(null);
     const router = useRouter();
 
     // Soumission purement UI : aucun appel API ni logique d'authentification
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
 
-        // Simulation d'un court délai réseau pour le feedback visuel
-        window.setTimeout(() => {
-            router.push('/finance')
+        const formData = new FormData(event.currentTarget);
+
+        const fields = {
+            email: formData.get("email"),
+            password: formData.get("password"),
+        };
+
+        // Validation des données
+        const validatedFields = signInSchema.safeParse(fields);
+        if (!validatedFields.success) {
+            setError(validatedFields.error.flatten().fieldErrors);
             setIsLoading(false);
-        }, 1200);
+            return;
+        }
+
+        // Identification
+        await signIn.email(
+            {
+                email: String(fields.email),
+                password: String(fields.password),
+            },
+            {
+                onSuccess: async () => {
+                    router.push("/finance");
+                    router.refresh();
+                    setIsLoading(false);
+                },
+                onError: (ctx) => {
+                    setError({
+                        message: [ctx.error.message],
+                    });
+                    setIsLoading(false);
+                },
+            },
+        );
     };
 
     return (
@@ -78,9 +111,12 @@ export default function LoginPage() {
                         <CardTitle className="text-2xl tracking-tight text-center">
                             Identification
                         </CardTitle>
-                        <CardDescription>
-                            Entrez vos identifiants pour accéder à
-                            l&apos;application de simulation crédit.
+                        <CardDescription
+                            className={error ? "text-red-500" : ""}
+                        >
+                            {error
+                                ? Object.values(error).join(", ")
+                                : "Entrez vos identifiants pour accéder à l&apos;application de simulation crédit."}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-2">
@@ -106,6 +142,7 @@ export default function LoginPage() {
                                         className="pl-10 placeholder:text-slate-500  transition-all duration-150"
                                         required
                                         autoComplete="email"
+                                        name="email"
                                         inputMode="email"
                                     />
                                 </div>
@@ -133,6 +170,7 @@ export default function LoginPage() {
                                         placeholder="••••••••"
                                         className="pl-10 pr-10 placeholder:text-slate-500  transition-all duration-150"
                                         required
+                                        name="password"
                                         autoComplete="current-password"
                                     />
                                     <button
@@ -181,25 +219,27 @@ export default function LoginPage() {
                                     className="text-[11px] text-slate-400 text-center"
                                 >
                                     En vous connectant, vous confirmez que
-                                    l&apos;utilisation de cet outil respecte
-                                    les politiques internes de sécurité.
+                                    l&apos;utilisation de cet outil respecte les
+                                    politiques internes de sécurité.
                                 </p>
                             </div>
                         </form>
 
-                        <div className="text-center text-xs text-slate-500">Vous n&apos;avez pas encore de compte ?{" "}
+                        <div className="text-center text-xs text-slate-500">
+                            Vous n&apos;avez pas encore de compte ?{" "}
                             <span
                                 className="cursor-pointer text-emerald-400 hover:underline"
-                                onClick={() => router.push("/finance/auth/register")}
+                                onClick={() =>
+                                    router.push("/finance/auth/register")
+                                }
                             >
                                 S&apos;inscrire
-                            </span> <br />
+                            </span>{" "}
+                            <br />
                             Accès réservé aux opérateurs autorisés. Les
                             tentatives d&apos;accès non autorisées peuvent être
-                            consignées. 
+                            consignées.
                         </div>
-
-                        
                     </CardContent>
                 </Card>
             </div>
