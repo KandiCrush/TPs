@@ -107,9 +107,7 @@ export default function SimulationPage() {
         table?.reduce((sum, row) => sum + row.mensualite, 0) || 0;
     const insuranceMonthly = calculateInsuranceCost();
     const insuranceTotal =
-        insuranceMonthly && param?.duree
-            ? insuranceMonthly * param.duree
-            : 0;
+        insuranceMonthly && param?.duree ? insuranceMonthly * param.duree : 0;
 
     return (
         <div className="flex flex-col h-full">
@@ -145,7 +143,9 @@ export default function SimulationPage() {
                                 >
                                     {/* Type de taux */}
                                     <div className="space-y-3">
-                                        <Label>Type de taux d&apos;intérêt</Label>
+                                        <Label>
+                                            Type de taux d&apos;intérêt
+                                        </Label>
                                         <RadioGroup
                                             value={tauxType}
                                             onValueChange={(value) =>
@@ -191,7 +191,9 @@ export default function SimulationPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="montant">
                                             Montant emprunté{" "}
-                                            <span className="text-destructive">*</span>
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="montant"
@@ -219,7 +221,9 @@ export default function SimulationPage() {
                                                 ? "annuel"
                                                 : "mensuel"}
                                             ){" "}
-                                            <span className="text-destructive">*</span>
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="taux"
@@ -256,7 +260,9 @@ export default function SimulationPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="duree">
                                             Durée (en mois){" "}
-                                            <span className="text-destructive">*</span>
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="duree"
@@ -337,7 +343,7 @@ export default function SimulationPage() {
                                                     value={insuranceRate}
                                                     onChange={(e) =>
                                                         setInsuranceRate(
-                                                            e.target.value
+                                                            e.target.value,
                                                         )
                                                     }
                                                     disabled={!!table}
@@ -350,7 +356,7 @@ export default function SimulationPage() {
                                                                 mois:{" "}
                                                                 <span className="text-primary">
                                                                     {insuranceMonthly.toFixed(
-                                                                        2
+                                                                        2,
                                                                     )}{" "}
                                                                     €
                                                                 </span>
@@ -372,26 +378,28 @@ export default function SimulationPage() {
                                             Générer le tableau
                                         </Button>
                                         <section className="flex gap-3 flex-row">
-                                        <Button
-                                        className="flex-1"
-                                            type="button"
-                                            variant="outline"
-                                            onClick={handleReset}
-                                        >
-                                            <RefreshCw className="mr-2 h-4 w-4" />
-                                            Réinitialiser
-                                        </Button>
-                                        {table && (
                                             <Button
                                                 className="flex-1"
                                                 type="button"
                                                 variant="outline"
-                                                onClick={handleSaveSimulation}
+                                                onClick={handleReset}
                                             >
-                                                <Save className="mr-2 h-4 w-4" />
-                                                Sauvegarder
+                                                <RefreshCw className="mr-2 h-4 w-4" />
+                                                Réinitialiser
                                             </Button>
-                                        )}
+                                            {table && (
+                                                <Button
+                                                    className="flex-1"
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={
+                                                        handleSaveSimulation
+                                                    }
+                                                >
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    Sauvegarder
+                                                </Button>
+                                            )}
                                         </section>
                                     </div>
                                 </form>
@@ -420,12 +428,12 @@ export default function SimulationPage() {
                                             </span>
                                             <span className="font-semibold">
                                                 {tauxType === "annuel"
-                                                    ? (param.taux * 120).toFixed(
-                                                          2
-                                                      )
-                                                    : (param.taux * 100).toFixed(
-                                                          2
-                                                      )}{" "}
+                                                    ? (
+                                                          param.taux * 120
+                                                      ).toFixed(2)
+                                                    : (
+                                                          param.taux * 100
+                                                      ).toFixed(2)}{" "}
                                                 %
                                             </span>
                                         </div>
@@ -473,7 +481,7 @@ export default function SimulationPage() {
                                                         </span>
                                                         <span className="font-semibold">
                                                             {insuranceMonthly.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </span>
@@ -484,7 +492,7 @@ export default function SimulationPage() {
                                                         </span>
                                                         <span className="font-semibold">
                                                             {insuranceTotal.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </span>
@@ -503,18 +511,23 @@ export default function SimulationPage() {
                         {!table && (
                             <Card className="flex-1 h-full">
                                 <CardHeader>
-                                    <CardTitle>Tableau d&apos;amortissement</CardTitle>
+                                    <CardTitle>
+                                        Tableau d&apos;amortissement
+                                    </CardTitle>
                                     <CardDescription>
-                                        Détail mensuel du remboursement
-                                        du prêt
+                                        Détail mensuel du remboursement du prêt
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1 flex items-center justify-center">
-                                    <p className="text-center text-muted-foreground">Le tableau d&apos;amortissement sera affiché ici une fois l&apos;opération effectuée</p>
+                                    <p className="text-center text-muted-foreground">
+                                        Le tableau d&apos;amortissement sera
+                                        affiché ici une fois l&apos;opération
+                                        effectuée
+                                    </p>
                                 </CardContent>
                             </Card>
                         )}
-{table && (
+                        {table && (
                             <Card>
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
@@ -575,25 +588,25 @@ export default function SimulationPage() {
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.interet.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.mensualite.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.amortissement.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </TableCell>
                                                         <TableCell className="text-right font-semibold">
                                                             {row.capitalRestant.toFixed(
-                                                                2
+                                                                2,
                                                             )}{" "}
                                                             €
                                                         </TableCell>
@@ -605,7 +618,6 @@ export default function SimulationPage() {
                                 </CardContent>
                             </Card>
                         )}
-
                     </div>
                 </div>
             </div>
