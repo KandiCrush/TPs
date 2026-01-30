@@ -3,6 +3,7 @@ export type Props = {
     taux: number; // taux mensuel
     duree: number | null;
     mensualite: number | null;
+    assuranceRate?: number | null;
 };
 
 export type AmortissementRow = {
@@ -11,6 +12,8 @@ export type AmortissementRow = {
     interet: number;
     mensualite: number;
     amortissement: number;
+    assurance: number;
+    totalMensualite: number;
 };
 
 type ReturnTable = {
@@ -24,7 +27,14 @@ export function CalculAmortissement({
     taux,
     duree,
     mensualite,
+    assuranceRate,
 }: Props): ReturnTable {
+    let assuranceMensuelle = 0;
+
+    if (assuranceRate && montant) {
+        assuranceMensuelle = (montant * (assuranceRate / 100)) / 12;
+    }
+
     // Calcul de la mensualité si absente
     if (!mensualite && montant && duree) {
         mensualite = (montant * taux) / (1 - Math.pow(1 + taux, -duree));
@@ -66,12 +76,23 @@ export function CalculAmortissement({
             interet,
             mensualite,
             amortissement,
+            assurance: assuranceMensuelle,
+            totalMensualite: mensualite + assuranceMensuelle,
         });
     }
 
     return {
         error: false,
         message: "Calcul terminé",
-        data: { inputs: { montant, taux, duree, mensualite }, output: table },
+        data: {
+            inputs: {
+                montant,
+                taux,
+                duree,
+                mensualite,
+                assuranceRate: assuranceRate ?? null,
+            },
+            output: table,
+        },
     };
 }

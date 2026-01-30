@@ -34,6 +34,9 @@ import {
     Save,
     Calculator,
 } from "lucide-react";
+import { ClientCombobox } from "@/src/components/ClientCombobox";
+import { ClientType } from "@/src/lib/z-type";
+import { toast } from "sonner";
 
 type TauxType = "annuel" | "mensuel";
 
@@ -43,6 +46,7 @@ export default function SimulationPage() {
     const [tauxType, setTauxType] = useState<TauxType>("annuel");
     const [insuranceEnabled, setInsuranceEnabled] = useState(false);
     const [insuranceRate, setInsuranceRate] = useState("");
+    const [client, setClient] = useState<ClientType | null>(null);
 
     const getFormData = async (form: HTMLFormElement) => {
         const formData = new FormData(form);
@@ -59,7 +63,7 @@ export default function SimulationPage() {
             if (data.taux) {
                 const tauxValue = Number(data.taux);
                 tauxMensuel =
-                    tauxType === "annuel" ? tauxValue / 120 : tauxValue / 100;
+                    tauxType === "annuel" ? tauxValue / 1200 : tauxValue / 100;
             }
 
             const result = await CalculAmortissement({
@@ -67,11 +71,13 @@ export default function SimulationPage() {
                 taux: tauxMensuel,
                 duree: data.duree ? Number(data.duree) : null,
                 mensualite: data.mensualite ? Number(data.mensualite) : null,
+                assuranceRate: Number(insuranceRate),
             });
             await setTable(result.data.output);
             await setParam(result.data.inputs as Props);
         } catch (error) {
             console.log(error);
+            toast.message("Erreur lors de la génération du tableau");
         }
     };
 
@@ -84,14 +90,27 @@ export default function SimulationPage() {
     };
 
     const handleSaveSimulation = () => {
+        if (!client) {
+            toast.message("Veuillez sélectionner un client");
+            return;
+        }
+
         console.log("Simulation sauvegardée (UI only)");
     };
 
     const handleExportPDF = () => {
+        if (!client) {
+            toast.message("Veuillez sélectionner un client");
+            return;
+        }
         console.log("Export PDF (UI only)");
     };
 
     const handleExportExcel = () => {
+        if (!client) {
+            toast.message("Veuillez sélectionner un client");
+            return;
+        }
         console.log("Export Excel (UI only)");
     };
 
@@ -134,6 +153,12 @@ export default function SimulationPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
+                                {/* Client */}
+                                <ClientCombobox
+                                    value={client}
+                                    onChange={setClient}
+                                />
+                                <Separator className="bg-red-500 my-6" />
                                 <form
                                     className="space-y-6"
                                     onSubmit={(e) => {
@@ -358,7 +383,7 @@ export default function SimulationPage() {
                                                                     {insuranceMonthly.toFixed(
                                                                         2,
                                                                     )}{" "}
-                                                                    €
+                                                                    $
                                                                 </span>
                                                             </p>
                                                         </div>
@@ -419,7 +444,7 @@ export default function SimulationPage() {
                                                 Montant emprunté:
                                             </span>
                                             <span className="font-semibold">
-                                                {param.montant?.toFixed(2)} €
+                                                {param.montant?.toFixed(2)} $
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
@@ -451,7 +476,7 @@ export default function SimulationPage() {
                                                 Mensualité:
                                             </span>
                                             <span className="font-semibold text-primary">
-                                                {param.mensualite?.toFixed(2)} €
+                                                {param.mensualite?.toFixed(2)} $
                                             </span>
                                         </div>
                                         <Separator />
@@ -460,7 +485,7 @@ export default function SimulationPage() {
                                                 Total intérêts:
                                             </span>
                                             <span className="font-semibold">
-                                                {totalInterest.toFixed(2)} €
+                                                {totalInterest.toFixed(2)} $
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
@@ -468,7 +493,7 @@ export default function SimulationPage() {
                                                 Total remboursé:
                                             </span>
                                             <span className="font-semibold">
-                                                {totalPayment.toFixed(2)} €
+                                                {totalPayment.toFixed(2)} $
                                             </span>
                                         </div>
                                         {insuranceEnabled &&
@@ -483,7 +508,7 @@ export default function SimulationPage() {
                                                             {insuranceMonthly.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between text-sm">
@@ -494,7 +519,7 @@ export default function SimulationPage() {
                                                             {insuranceTotal.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
                                                         </span>
                                                     </div>
                                                 </>
@@ -573,6 +598,9 @@ export default function SimulationPage() {
                                                         Mensualité
                                                     </TableHead>
                                                     <TableHead className="text-right">
+                                                        Assurance
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
                                                         Amortissement
                                                     </TableHead>
                                                     <TableHead className="text-right">
@@ -590,25 +618,31 @@ export default function SimulationPage() {
                                                             {row.interet.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.mensualite.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {row.assurance.toFixed(
+                                                                2,
+                                                            )}{" "}
+                                                            $
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.amortissement.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
                                                         </TableCell>
                                                         <TableCell className="text-right font-semibold">
                                                             {row.capitalRestant.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            €
+                                                            $
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
