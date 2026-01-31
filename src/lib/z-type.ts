@@ -1,5 +1,10 @@
 import z from "zod";
-import { clientSchema, signInSchema, signUpSchema } from "./z-schema";
+import {
+    clientSchema,
+    signInSchema,
+    signUpSchema,
+    simulationSchema,
+} from "./z-schema";
 
 // export type Response = {
 //     error: boolean;
@@ -10,3 +15,5 @@ import { clientSchema, signInSchema, signUpSchema } from "./z-schema";
 export type SignInType = z.infer<typeof signInSchema>;
 export type SignUpType = z.infer<typeof signUpSchema>;
 export type ClientType = z.infer<typeof clientSchema>;
+
+export type SimulationType = z.infer<typeof simulationSchema>;

@@ -37,6 +37,11 @@ import {
 import { ClientCombobox } from "@/src/components/ClientCombobox";
 import { ClientType } from "@/src/lib/z-type";
 import { toast } from "sonner";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/src/components/ui/tooltip";
 
 type TauxType = "annuel" | "mensuel";
 
@@ -56,7 +61,17 @@ export default function SimulationPage() {
             taux: formData.get("taux"),
             duree: formData.get("duree"),
             mensualite: formData.get("mensualite"),
+            date: new Date(formData.get("date") as string) || new Date(),
         };
+
+        if (
+            Number(data.montant || data.taux || data.duree || data.mensualite) <
+            0
+        ) {
+            toast.warning("Les données doivent toutes être positives !", {
+                position: "top-center",
+            });
+        }
 
         try {
             let tauxMensuel = 0;
@@ -72,12 +87,15 @@ export default function SimulationPage() {
                 duree: data.duree ? Number(data.duree) : null,
                 mensualite: data.mensualite ? Number(data.mensualite) : null,
                 assuranceRate: Number(insuranceRate),
+                date: data.date,
             });
             await setTable(result.data.output);
             await setParam(result.data.inputs as Props);
         } catch (error) {
             console.log(error);
-            toast.message("Erreur lors de la génération du tableau");
+            toast.warning("Erreur lors de la génération du tableau", {
+                position: "top-center",
+            });
         }
     };
 
@@ -89,13 +107,54 @@ export default function SimulationPage() {
         setInsuranceRate("");
     };
 
-    const handleSaveSimulation = () => {
-        if (!client) {
-            toast.message("Veuillez sélectionner un client");
+    const handleSaveSimulation = async () => {
+        if (!client || !param || !table) {
+            toast.info(
+                "Veuillez compléter la simulation avant de sauvegarder",
+                {
+                    position: "top-center",
+                },
+            );
             return;
         }
 
-        console.log("Simulation sauvegardée (UI only)");
+        const response = await fetch("/api/simulation", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                simulation: {
+                    taux:
+                        tauxType == "annuel"
+                            ? param.taux * 1200
+                            : param.taux * 100,
+                    typeTaux: tauxType,
+                    dateTraitement: new Date(),
+                },
+                details: [
+                    {
+                        montant: param.montant,
+                        duree: param.duree,
+                        mensualite: param.mensualite,
+                        totalInterets: totalInterest,
+                        totalAssurance: insuranceEnabled
+                            ? insuranceTotal
+                            : null,
+                        clientId: client.id,
+                    },
+                ],
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            toast.error(result.message);
+            return;
+        }
+
+        toast.success("Simulation enregistrée avec succès");
     };
 
     const handleExportPDF = () => {
@@ -305,6 +364,25 @@ export default function SimulationPage() {
                                         </p>
                                     </div>
 
+                                    {/* Date d'emprunt */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mensualite">
+                                            Date du prêt
+                                        </Label>
+                                        <Input
+                                            id="date"
+                                            name="date"
+                                            type="date"
+                                            placeholder=""
+                                            defaultValue={new Date().toLocaleString()}
+                                            disabled={!!table}
+                                        />
+                                        <p className="text-sm text-muted-foreground">
+                                            Date à laquelle le prêt à été
+                                            accordée
+                                        </p>
+                                    </div>
+
                                     {/* Mensualité */}
                                     <div className="space-y-2">
                                         <Label htmlFor="mensualite">
@@ -454,12 +532,11 @@ export default function SimulationPage() {
                                             <span className="font-semibold">
                                                 {tauxType === "annuel"
                                                     ? (
-                                                          param.taux * 120
+                                                          param.taux * 1200
                                                       ).toFixed(2)
                                                     : (
                                                           param.taux * 100
                                                       ).toFixed(2)}{" "}
-                                                %
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
@@ -592,13 +669,13 @@ export default function SimulationPage() {
                                                 <TableRow>
                                                     <TableHead>Mois</TableHead>
                                                     <TableHead className="text-right">
+                                                        Date
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
                                                         Intérêt
                                                     </TableHead>
                                                     <TableHead className="text-right">
                                                         Mensualité
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Assurance
                                                     </TableHead>
                                                     <TableHead className="text-right">
                                                         Amortissement
@@ -615,6 +692,9 @@ export default function SimulationPage() {
                                                             {row.mois}
                                                         </TableCell>
                                                         <TableCell className="text-right">
+                                                            {row.date.toLocaleDateString()}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
                                                             {row.interet.toFixed(
                                                                 2,
                                                             )}{" "}
@@ -624,14 +704,26 @@ export default function SimulationPage() {
                                                             {row.mensualite.toFixed(
                                                                 2,
                                                             )}{" "}
-                                                            $
+                                                            ${" "}
+                                                            <Tooltip>
+                                                                <TooltipTrigger
+                                                                    asChild
+                                                                >
+                                                                    <span>
+                                                                        (+
+                                                                        {row.assurance.toFixed(
+                                                                            2,
+                                                                        )}
+                                                                        $)
+                                                                    </span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    Apport de
+                                                                    l&apos;assurance
+                                                                </TooltipContent>
+                                                            </Tooltip>
                                                         </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {row.assurance.toFixed(
-                                                                2,
-                                                            )}{" "}
-                                                            $
-                                                        </TableCell>
+
                                                         <TableCell className="text-right">
                                                             {row.amortissement.toFixed(
                                                                 2,

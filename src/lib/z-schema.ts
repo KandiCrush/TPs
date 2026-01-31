@@ -35,5 +35,29 @@ export const clientSchema = z.object({
         .optional()
         .nullable(),
 });
-
 export const clientsSchema = z.array(clientSchema);
+
+export const TypeTauxEnum = z.enum(["annuel", "mensuel"]);
+export const StatutSimulationEnum = z.enum(["DRAFT", "CONFIRMED", "ARCHIVED"]);
+export const simulationSchema = z.object({
+    id: z.string().optional(),
+    taux: z.number().positive("Le taux doit être positif"),
+    typeTaux: TypeTauxEnum,
+    dateTraitement: z.coerce.date(),
+    operateurId: z.string(),
+    createdAt: z.date().optional(),
+});
+export const simulationsSchema = z.array(simulationSchema);
+export const simulationResultSchema = z.object({
+    id: z.string().uuid().optional(),
+    montant: z.number().positive("Le montant doit être positif"),
+    duree: z.number().int().positive("La durée doit être supérieure à 0"),
+    mensualite: z.number().positive("La mensualité doit être positive"),
+    totalInterets: z.number().min(0),
+    totalAssurance: z.number().min(0).nullable().optional(),
+    statut: StatutSimulationEnum.default("DRAFT"),
+    clientId: z.string().uuid(),
+    simulationId: z.string().optional(),
+    createdAt: z.date().optional(),
+});
+export const simulationResultsSchema = z.array(simulationResultSchema);

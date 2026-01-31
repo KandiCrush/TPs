@@ -2,6 +2,7 @@ export type Props = {
     montant: number | null;
     taux: number; // taux mensuel
     duree: number | null;
+    date?: Date;
     mensualite: number | null;
     assuranceRate?: number | null;
 };
@@ -12,6 +13,7 @@ export type AmortissementRow = {
     interet: number;
     mensualite: number;
     amortissement: number;
+    date: Date;
     assurance: number;
     totalMensualite: number;
 };
@@ -26,6 +28,7 @@ export function CalculAmortissement({
     montant,
     taux,
     duree,
+    date = new Date(),
     mensualite,
     assuranceRate,
 }: Props): ReturnTable {
@@ -67,7 +70,8 @@ export function CalculAmortissement({
 
     for (let mois = 1; mois <= duree; mois++) {
         const interet = capitalRestant * taux;
-        const amortissement = mensualite - interet;
+        const amortissement = mensualite - interet + assuranceMensuelle;
+        const newDate = new Date(date?.setMonth(date.getMonth() + 1));
         capitalRestant -= amortissement;
 
         table.push({
@@ -75,6 +79,7 @@ export function CalculAmortissement({
             capitalRestant: Math.max(capitalRestant, 0),
             interet,
             mensualite,
+            date: newDate,
             amortissement,
             assurance: assuranceMensuelle,
             totalMensualite: mensualite + assuranceMensuelle,
