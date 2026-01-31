@@ -42,6 +42,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/src/components/ui/tooltip";
+import { generateSimulationPDF } from "@/src/lib/generateSimulationPDF";
 
 type TauxType = "annuel" | "mensuel";
 
@@ -157,11 +158,32 @@ export default function SimulationPage() {
         toast.success("Simulation enregistrée avec succès");
     };
 
-    const handleExportPDF = () => {
+    const handleExportPDF = async () => {
         if (!client) {
             toast.message("Veuillez sélectionner un client");
             return;
         }
+        if (!param || !table) {
+            toast.message("Veuillez effectuer une simulation");
+            return;
+        }
+
+        const blob = await generateSimulationPDF({
+            client,
+            simulation: {
+                montant: param.montant!,
+                taux: param.taux,
+                typeTaux: tauxType == "annuel" ? "ANNUEL" : "MENSUEL",
+                duree: param.duree!,
+                mensualite: param.mensualite!,
+                totalInterets: totalInterest,
+                totalAssurance: insuranceTotal,
+                dateTraitement: new Date(),
+            },
+            tableau: table,
+        });
+        const url = URL.createObjectURL(blob);
+        window.open(url);
         console.log("Export PDF (UI only)");
     };
 

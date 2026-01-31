@@ -27,72 +27,23 @@ import {
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import prisma from "@/src/lib/prisma";
+import { getUser } from "@/src/lib/auth-server";
+import { unauthorized } from "next/navigation";
 
-type SimulationStatus = "validated" | "draft" | "deleted";
-
-interface Simulation {
-    id: string;
-    date: string;
-    montant: number;
-    taux: number;
-    duree: number;
-    status: SimulationStatus;
-}
-
-// Mock data
-const mockStats = {
-    total: 24,
-    validated: 18,
-    draft: 5,
-    deleted: 1,
-};
-
-const recentSimulations: Simulation[] = [
-    {
-        id: "1",
-        date: "2026-01-26",
-        montant: 150000,
-        taux: 3.2,
-        duree: 240,
-        status: "validated",
-    },
-    {
-        id: "2",
-        date: "2026-01-25",
-        montant: 80000,
-        taux: 3.8,
-        duree: 180,
-        status: "draft",
-    },
-    {
-        id: "3",
-        date: "2026-01-24",
-        montant: 250000,
-        taux: 2.9,
-        duree: 300,
-        status: "validated",
-    },
-    {
-        id: "4",
-        date: "2026-01-23",
-        montant: 120000,
-        taux: 3.5,
-        duree: 240,
-        status: "validated",
-    },
-];
+type SimulationStatus = "VALIDATED" | "DRAFT" | "DELETED";
 
 const getStatusBadge = (status: SimulationStatus) => {
     const variants = {
-        validated: "default",
-        draft: "secondary",
-        deleted: "destructive",
+        VALIDATED: "default",
+        DRAFT: "secondary",
+        DELETED: "destructive",
     } as const;
 
     const labels = {
-        validated: "Validé",
-        draft: "Brouillon",
-        deleted: "Supprimé",
+        VALIDATED: "Validé",
+        DRAFT: "Brouillon",
+        DELETED: "Supprimé",
     };
 
     return (
@@ -101,6 +52,74 @@ const getStatusBadge = (status: SimulationStatus) => {
 };
 
 export default async function DashboardPage() {
+    const user = await getUser();
+    const operateur = await prisma.operateur.findUnique({
+        where: { userId: user?.id },
+    });
+    if (!operateur) {
+        return unauthorized;
+    }
+
+    const grouped = await prisma.simulationResult.groupBy({
+        by: ["statut"],
+        where: {
+            simulation: {
+                operateurId: operateur.id,
+            },
+        },
+        _count: {
+            _all: true,
+        },
+    });
+
+    const stats = {
+        total: 0,
+        validated: 0,
+        draft: 0,
+        deleted: 0,
+    };
+
+    grouped.forEach((item) => {
+        stats.total += item._count._all;
+
+        if (item.statut === "VALIDATED") {
+            stats.validated = item._count._all;
+        }
+
+        if (item.statut === "DRAFT") {
+            stats.draft = item._count._all;
+        }
+
+        if (item.statut === "DELETED") {
+            stats.deleted = item._count._all;
+        }
+    });
+
+    const lastSimulations = await prisma.simulationResult.findMany({
+        take: 5,
+        orderBy: {
+            createdAt: "desc",
+        },
+        select: {
+            id: true,
+            montant: true,
+            duree: true,
+            mensualite: true,
+            totalInterets: true,
+            totalAssurance: true,
+            statut: true,
+            createdAt: true,
+
+            simulation: {
+                select: {
+                    taux: true,
+                    typeTaux: true,
+                    dateTraitement: true,
+                },
+            },
+        },
+    });
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -124,7 +143,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {mockStats.total}
+                                {stats.total}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Toutes simulations confondues
@@ -141,7 +160,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-green-600">
-                                {mockStats.validated}
+                                {stats.validated}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Simulations finalisées
@@ -158,7 +177,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {mockStats.draft}
+                                {stats.draft}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 En cours de modification
@@ -175,7 +194,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {mockStats.deleted}
+                                {stats.deleted}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Archivées
@@ -226,7 +245,7 @@ export default async function DashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {recentSimulations.length === 0 ? (
+                        {lastSimulations.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 <p>Aucune simulation récente</p>
                                 <Link href="/finance/simulation">
@@ -251,11 +270,11 @@ export default async function DashboardPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {recentSimulations.map((sim) => (
+                                        {lastSimulations.map((sim) => (
                                             <TableRow key={sim.id}>
                                                 <TableCell>
                                                     {new Date(
-                                                        sim.date,
+                                                        sim.createdAt,
                                                     ).toLocaleDateString(
                                                         "fr-FR",
                                                     )}
@@ -265,13 +284,13 @@ export default async function DashboardPage() {
                                                     €
                                                 </TableCell>
                                                 <TableCell>
-                                                    {sim.taux}%
+                                                    {sim.simulation.taux}%
                                                 </TableCell>
                                                 <TableCell>
                                                     {sim.duree} mois
                                                 </TableCell>
                                                 <TableCell>
-                                                    {getStatusBadge(sim.status)}
+                                                    {getStatusBadge(sim.statut)}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">

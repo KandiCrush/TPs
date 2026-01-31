@@ -69,21 +69,23 @@ export function CalculAmortissement({
     const table: AmortissementRow[] = [];
 
     for (let mois = 1; mois <= duree; mois++) {
-        const interet = capitalRestant * taux;
-        const amortissement = mensualite - interet + assuranceMensuelle;
-        const newDate = new Date(date?.setMonth(date.getMonth() + 1));
-        capitalRestant -= amortissement;
+        if (capitalRestant > 0) {
+            const interet = capitalRestant * taux;
+            const amortissement = mensualite - interet + assuranceMensuelle;
+            const newDate = new Date(date?.setMonth(date.getMonth() + 1));
+            capitalRestant -= amortissement;
 
-        table.push({
-            mois,
-            capitalRestant: Math.max(capitalRestant, 0),
-            interet,
-            mensualite,
-            date: newDate,
-            amortissement,
-            assurance: assuranceMensuelle,
-            totalMensualite: mensualite + assuranceMensuelle,
-        });
+            table.push({
+                mois,
+                capitalRestant: Math.max(capitalRestant, 0),
+                interet,
+                mensualite,
+                date: newDate,
+                amortissement,
+                assurance: assuranceMensuelle,
+                totalMensualite: mensualite + assuranceMensuelle,
+            });
+        }
     }
 
     return {
