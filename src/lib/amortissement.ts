@@ -1,6 +1,6 @@
 export type Props = {
     montant: number | null;
-    taux: number; // taux mensuel
+    taux: number;
     duree: number | null;
     date?: Date;
     mensualite: number | null;

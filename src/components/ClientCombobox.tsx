@@ -76,7 +76,7 @@ export function ClientCombobox({
 
     const [state, formAction, isPending] = React.useActionState(
         createClientAction,
-        initialState,
+        initialState
     );
 
     // Récupération des clients
@@ -91,6 +91,7 @@ export function ClientCombobox({
 
                 if (!validedClients.success) {
                     setLoadingClient(false);
+                    console.log(validedClients.error);
                     toast.message("Impossible de charger la liste des clients");
 
                     return;
@@ -102,7 +103,7 @@ export function ClientCombobox({
                 console.log("Erreur lors du chargement des clients", error);
 
                 toast.message(
-                    "Une erreur est survenue lors du chargement des clients",
+                    "Une erreur est survenue lors du chargement des clients"
                 );
             }
         };
@@ -251,7 +252,7 @@ export function ClientCombobox({
                         "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
                         showCreateForm
                             ? "grid-rows-[1fr] opacity-100"
-                            : "grid-rows-[0fr] opacity-0",
+                            : "grid-rows-[0fr] opacity-0"
                     )}
                 >
                     <div className="overflow-hidden">
@@ -301,7 +302,7 @@ export function ClientCombobox({
                                                 }
                                                 className={cn(
                                                     errors.nom &&
-                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                        "border-destructive focus-visible:ring-destructive/20"
                                                 )}
                                             />
                                             {errors.nom && (
@@ -343,7 +344,7 @@ export function ClientCombobox({
                                                 }
                                                 className={cn(
                                                     errors.prenom &&
-                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                        "border-destructive focus-visible:ring-destructive/20"
                                                 )}
                                             />
                                             {errors.prenom && (

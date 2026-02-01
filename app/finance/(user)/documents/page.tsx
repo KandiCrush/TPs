@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import {
@@ -12,7 +17,6 @@ import {
     TableRow,
 } from "@/src/components/ui/table";
 import {
-    FileDown,
     FileText,
     FileSpreadsheet,
     Download,
@@ -121,18 +125,17 @@ const getStatusBadge = (status: DocumentStatus) => {
     };
 
     return (
-        <Badge variant={variants[status] || "default"}>
-            {labels[status]}
-        </Badge>
+        <Badge variant={variants[status] || "default"}>{labels[status]}</Badge>
     );
 };
 
 export default function DocumentsPage() {
     const [searchTerm, setSearchTerm] = useState("");
 
-    const filteredDocuments = mockDocuments.filter((doc) =>
-        doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.montant?.toString().includes(searchTerm)
+    const filteredDocuments = mockDocuments.filter(
+        (doc) =>
+            doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            doc.montant?.toString().includes(searchTerm)
     );
 
     const handleDownload = (id: string) => {
@@ -251,7 +254,9 @@ export default function DocumentsPage() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Type</TableHead>
-                                            <TableHead>Nom du fichier</TableHead>
+                                            <TableHead>
+                                                Nom du fichier
+                                            </TableHead>
                                             <TableHead>Simulation</TableHead>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Taille</TableHead>
@@ -278,13 +283,16 @@ export default function DocumentsPage() {
                                                 <TableCell>
                                                     {new Date(
                                                         doc.createdAt
-                                                    ).toLocaleDateString("fr-FR", {
-                                                        year: "numeric",
-                                                        month: "short",
-                                                        day: "numeric",
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                    })}
+                                                    ).toLocaleDateString(
+                                                        "fr-FR",
+                                                        {
+                                                            year: "numeric",
+                                                            month: "short",
+                                                            day: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        }
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     {doc.size || "-"}
@@ -331,7 +339,9 @@ export default function DocumentsPage() {
                                                             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                                             title="Supprimer"
                                                             onClick={() =>
-                                                                handleDelete(doc.id)
+                                                                handleDelete(
+                                                                    doc.id
+                                                                )
                                                             }
                                                         >
                                                             <Trash2 className="h-4 w-4" />

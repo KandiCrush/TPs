@@ -14,7 +14,7 @@ import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUpSchema } from "@/src/lib/z-schema";
-import { signUp } from "@/src/lib/auth-client";
+import { signUp } from "@/src/lib/auth-lib/auth-client";
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -73,7 +73,7 @@ export default function RegisterPage() {
                     });
                     setIsLoading(false);
                 },
-            },
+            }
         );
     };
 
@@ -247,7 +247,7 @@ export default function RegisterPage() {
                                             type="button"
                                             onClick={() =>
                                                 setShowConfirmPassword(
-                                                    !showConfirmPassword,
+                                                    !showConfirmPassword
                                                 )
                                             }
                                             className="absolute right-1 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"

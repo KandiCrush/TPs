@@ -22,7 +22,7 @@ function formatDate(date: Date): string {
     }).format(date);
 }
 
-const ROWS_PER_PAGE = 28;
+const ROWS_PER_PAGE = 36;
 
 const styles = StyleSheet.create({
     page: {
@@ -192,7 +192,7 @@ function FirstPageContent({
     const { client, simulation } = data;
     const tauxLabel =
         simulation.typeTaux === "ANNUEL"
-            ? `${simulation.taux.toFixed(2)} % (annuel)`
+            ? `${simulation.taux * 12} % (annuel)`
             : `${simulation.taux.toFixed(2)} % (mensuel)`;
 
     return (
@@ -324,15 +324,22 @@ function TablePageContent({
 export function SimulationPDFDocument({ data }: { data: SimulationPDFData }) {
     const { tableau } = data;
     const hasAssurance = tableau.some(
-        (r) => r.assurance != null && r.assurance > 0,
+        (r) => r.assurance != null && r.assurance > 0
     );
     const hasTotalMensualite = tableau.some(
-        (r) => r.totalMensualite != null && r.totalMensualite > 0,
+        (r) => r.totalMensualite != null && r.totalMensualite > 0
     );
 
     const chunks: SimulationPDFTableauRow[][] = [];
     for (let i = 0; i < tableau.length; i += ROWS_PER_PAGE) {
-        chunks.push(tableau.slice(i, i + ROWS_PER_PAGE));
+        if (i === 0) {
+            chunks.push(tableau.slice(i, i + 61));
+        } else if (i === ROWS_PER_PAGE) {
+            i = 61;
+            chunks.push(tableau.slice(i, i + ROWS_PER_PAGE));
+        } else {
+            chunks.push(tableau.slice(i, i + ROWS_PER_PAGE));
+        }
     }
 
     const firstChunk = chunks[0] ?? [];

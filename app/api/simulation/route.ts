@@ -1,4 +1,4 @@
-import { auth } from "@/src/lib/auth";
+import { auth } from "@/src/lib/auth-lib/auth";
 import prisma from "@/src/lib/prisma";
 import { simulationSchema, simulationResultsSchema } from "@/src/lib/z-schema";
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     if (!session?.user) {
         return NextResponse.json(
             { error: true, message: "Unauthorized" },
-            { status: 401 },
+            { status: 401 }
         );
     }
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     } catch {
         return NextResponse.json(
             { error: true, message: "Body invalide" },
-            { status: 400 },
+            { status: 400 }
         );
     }
 
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
                 error: true,
                 message: "Aucun opérateur associé à cet utilisateur",
             },
-            { status: 400 },
+            { status: 400 }
         );
     }
 
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     }
 
     const simResults = simulationResultsSchema.safeParse(body.details);
+    console.log(body.details);
 
     if (!simResults.success) {
         console.log(simResults.error.flatten().fieldErrors);
@@ -63,8 +64,7 @@ export async function POST(req: Request) {
         const newSimulation = await prisma.simulationSession.create({
             data: {
                 taux: simData.data.taux,
-                typeTaux:
-                    simData.data.typeTaux == "annuel" ? "ANNUEL" : "MENSUEL",
+                typeTaux: simData.data.typeTaux,
                 operateurId: simData.data.operateurId,
                 dateTraitement: simData.data.dateTraitement,
             },
@@ -96,7 +96,48 @@ export async function POST(req: Request) {
                 message:
                     "Une erreur s'est produite lors de l'enregistrement de la simulation",
             },
-            { status: 500 },
+            { status: 500 }
         );
     }
+}
+
+export async function GET(req: Request) {
+    const session = await auth.api.getSession(req);
+
+    if (!session?.user) {
+        return NextResponse.json(
+            { error: true, message: "Unauthorized" },
+            { status: 401 }
+        );
+    }
+
+    const operateur = await prisma.operateur.findUnique({
+        where: { userId: session.user.id },
+    });
+
+    if (!operateur) {
+        return NextResponse.json(
+            {
+                error: true,
+                message: "Aucun opérateur associé à cet utilisateur",
+            },
+            { status: 400 }
+        );
+    }
+
+    const simulations = await prisma.simulationResult.findMany({
+        where: {
+            simulation: {
+                operateurId: operateur.id,
+            },
+            NOT: {
+                statut: "DELETED",
+            },
+        },
+        include: {
+            simulation: true,
+        },
+    });
+
+    return NextResponse.json({ simulations });
 }

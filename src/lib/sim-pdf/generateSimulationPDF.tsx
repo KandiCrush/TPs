@@ -12,10 +12,21 @@ import type { SimulationPDFData } from "./simulation-pdf-types";
  * @returns Promise résolue avec le Blob du PDF
  */
 export async function generateSimulationPDF(
-  data: SimulationPDFData
+    data: SimulationPDFData
 ): Promise<Blob> {
-  const blob = await pdf(<SimulationPDFDocument data={data} />).toBlob();
-  return blob;
+    const blob = await pdf(<SimulationPDFDocument data={data} />).toBlob();
+    const arrayBuffer = await blob.arrayBuffer();
+    await fetch("/api/simulation/document", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/pdf",
+            "X-Filename":
+                data.client.nom + "-" + data.client.prenom + "-simulation.pdf",
+        },
+        body: arrayBuffer,
+    });
+
+    return blob;
 }
 
 /*

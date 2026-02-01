@@ -28,7 +28,7 @@ export const clientSchema = z.object({
     prenom: z
         .string("Le prénom est invalide")
         .min(3, "Le prénom doit contenir au moins 3 caractères"),
-    email: z.email("Le adresse email est invalid").optional().nullable(),
+    email: z.email("Le adresse email est invalid").optional(),
     telephone: z
         .string("Le numéro de téléphone est invalide")
         .min(10, "Le numéro de téléphone doit contenir au moins 10 caractères")
@@ -37,8 +37,8 @@ export const clientSchema = z.object({
 });
 export const clientsSchema = z.array(clientSchema);
 
-export const TypeTauxEnum = z.enum(["annuel", "mensuel"]);
-export const StatutSimulationEnum = z.enum(["DRAFT", "CONFIRMED", "ARCHIVED"]);
+export const TypeTauxEnum = z.enum(["ANNUEL", "MENSUEL"]);
+export const StatutSimulationEnum = z.enum(["DRAFT", "VALIDATED", "DELETED"]);
 export const simulationSchema = z.object({
     id: z.string().optional(),
     taux: z.number().positive("Le taux doit être positif"),
@@ -58,6 +58,7 @@ export const simulationResultSchema = z.object({
     statut: StatutSimulationEnum.default("DRAFT"),
     clientId: z.string().uuid(),
     simulationId: z.string().optional(),
+    simulation: simulationSchema.optional(),
     createdAt: z.date().optional(),
 });
 export const simulationResultsSchema = z.array(simulationResultSchema);

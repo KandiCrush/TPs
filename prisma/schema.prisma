@@ -105,8 +105,6 @@ model SimulationResult {
   client     Client            @relation(fields: [clientId], references: [id])
   simulation SimulationSession @relation(fields: [simulationId], references: [id])
 
-  documents SimulationDocument[]
-
   createdAt DateTime @default(now())
 }
 
@@ -116,9 +114,6 @@ model SimulationDocument {
   nom     String
   type    DocumentType
   fichier Bytes
-
-  resultId String
-  result   SimulationResult @relation(fields: [resultId], references: [id])
 
   createdAt DateTime @default(now())
 }

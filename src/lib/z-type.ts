@@ -3,6 +3,7 @@ import {
     clientSchema,
     signInSchema,
     signUpSchema,
+    simulationResultSchema,
     simulationSchema,
 } from "./z-schema";
 
@@ -17,3 +18,4 @@ export type SignUpType = z.infer<typeof signUpSchema>;
 export type ClientType = z.infer<typeof clientSchema>;
 
 export type SimulationType = z.infer<typeof simulationSchema>;
+export type SimulationResultType = z.infer<typeof simulationResultSchema>;

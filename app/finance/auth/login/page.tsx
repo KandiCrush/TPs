@@ -13,7 +13,7 @@ import { Button } from "@/src/components/ui/button";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "@/src/lib/auth-client";
+import { signIn } from "@/src/lib/auth-lib/auth-client";
 import { signInSchema } from "@/src/lib/z-schema";
 
 export default function LoginPage() {
@@ -60,7 +60,7 @@ export default function LoginPage() {
                     });
                     setIsLoading(false);
                 },
-            },
+            }
         );
     };
 

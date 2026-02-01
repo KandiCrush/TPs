@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import {
@@ -11,149 +16,69 @@ import {
     TableHeader,
     TableRow,
 } from "@/src/components/ui/table";
-import { Eye, Copy, Trash2, Search, Filter } from "lucide-react";
+import { Eye, Copy, Trash2, Search } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SimulationResultType } from "@/src/lib/z-type";
+import { DeleteSimButton } from "../_components/delete-sim-button";
+import { handleDeleted, handleValidated } from "@/src/lib/action";
+import { ValidateSimButton } from "../_components/valide-sim-button";
+import { SimulationDetailsModal } from "@/src/components/SimulationDetailsModal";
 
-type SimulationStatus = "validated" | "draft" | "deleted";
-
-interface Simulation {
-    id: string;
-    date: string;
-    montant: number;
-    taux: number;
-    duree: number;
-    status: SimulationStatus;
-    mensualite?: number;
-}
-
-// Mock data
-const mockSimulations: Simulation[] = [
-    {
-        id: "1",
-        date: "2026-01-26",
-        montant: 150000,
-        taux: 3.2,
-        duree: 240,
-        status: "validated",
-        mensualite: 850.50,
-    },
-    {
-        id: "2",
-        date: "2026-01-25",
-        montant: 80000,
-        taux: 3.8,
-        duree: 180,
-        status: "draft",
-        mensualite: 580.25,
-    },
-    {
-        id: "3",
-        date: "2026-01-24",
-        montant: 250000,
-        taux: 2.9,
-        duree: 300,
-        status: "validated",
-        mensualite: 1200.75,
-    },
-    {
-        id: "4",
-        date: "2026-01-23",
-        montant: 120000,
-        taux: 3.5,
-        duree: 240,
-        status: "validated",
-        mensualite: 720.30,
-    },
-    {
-        id: "5",
-        date: "2026-01-22",
-        montant: 200000,
-        taux: 3.0,
-        duree: 300,
-        status: "draft",
-        mensualite: 950.00,
-    },
-    {
-        id: "6",
-        date: "2026-01-20",
-        montant: 100000,
-        taux: 3.5,
-        duree: 240,
-        status: "validated",
-        mensualite: 600.15,
-    },
-    {
-        id: "7",
-        date: "2026-01-18",
-        montant: 50000,
-        taux: 4.2,
-        duree: 120,
-        status: "draft",
-        mensualite: 510.50,
-    },
-    {
-        id: "8",
-        date: "2026-01-15",
-        montant: 200000,
-        taux: 2.8,
-        duree: 300,
-        status: "validated",
-        mensualite: 950.25,
-    },
-];
+type SimulationStatus = "VALIDATED" | "DRAFT" | "DELETED";
 
 const getStatusBadge = (status: SimulationStatus) => {
     const variants = {
-        validated: "default",
-        draft: "secondary",
-        deleted: "destructive",
+        VALIDATED: "default",
+        DRAFT: "secondary",
+        DELETED: "destructive",
     } as const;
 
     const labels = {
-        validated: "Validé",
-        draft: "Brouillon",
-        deleted: "Supprimé",
+        VALIDATED: "Validé",
+        DRAFT: "Brouillon",
+        DELETED: "Supprimé",
     };
 
     return (
-        <Badge variant={variants[status] || "default"}>
-            {labels[status]}
-        </Badge>
+        <Badge variant={variants[status] || "default"}>{labels[status]}</Badge>
     );
 };
 
 export default function HistoriquePage() {
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState<SimulationStatus | "all">("all");
+    const [filterStatus, setFilterStatus] = useState<SimulationStatus | "all">(
+        "all"
+    );
+    const [simulations, setSimulations] = useState<SimulationResultType[]>([]);
 
-    const filteredSimulations = mockSimulations.filter((sim) => {
+    useEffect(() => {
+        const fetchSimulations = async () => {
+            const response = await fetch("/api/simulation");
+            const data = await response.json();
+            setSimulations(data.simulations);
+        };
+
+        fetchSimulations();
+    }, []);
+
+    const filteredSimulations = simulations.filter((sim) => {
         const matchesSearch =
             sim.montant.toString().includes(searchTerm) ||
-            sim.taux.toString().includes(searchTerm) ||
+            sim.simulation!.taux.toString().includes(searchTerm) ||
             sim.duree.toString().includes(searchTerm);
         const matchesFilter =
-            filterStatus === "all" || sim.status === filterStatus;
+            filterStatus === "all" || sim.statut === filterStatus;
         return matchesSearch && matchesFilter;
     });
-
-    const handleView = (id: string) => {
-        console.log("Voir simulation", id);
-    };
-
-    const handleDuplicate = (id: string) => {
-        console.log("Dupliquer simulation", id);
-    };
-
-    const handleDelete = (id: string) => {
-        console.log("Supprimer simulation", id);
-    };
 
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="border-b bg-card px-6 py-4">
-                <h1 className="text-2xl font-bold">Historique des simulations</h1>
+                <h1 className="text-2xl font-bold">
+                    Historique des simulations
+                </h1>
                 <p className="text-sm text-muted-foreground mt-1">
                     Consultez et gérez toutes vos simulations de prêt
                 </p>
@@ -195,23 +120,23 @@ export default function HistoriquePage() {
                                 </Button>
                                 <Button
                                     variant={
-                                        filterStatus === "validated"
+                                        filterStatus === "VALIDATED"
                                             ? "default"
                                             : "outline"
                                     }
                                     size="sm"
-                                    onClick={() => setFilterStatus("validated")}
+                                    onClick={() => setFilterStatus("VALIDATED")}
                                 >
                                     Validés
                                 </Button>
                                 <Button
                                     variant={
-                                        filterStatus === "draft"
+                                        filterStatus === "DRAFT"
                                             ? "default"
                                             : "outline"
                                     }
                                     size="sm"
-                                    onClick={() => setFilterStatus("draft")}
+                                    onClick={() => setFilterStatus("DRAFT")}
                                 >
                                     Brouillons
                                 </Button>
@@ -236,7 +161,8 @@ export default function HistoriquePage() {
                                     Aucune simulation trouvée
                                 </p>
                                 <p className="text-sm">
-                                    Essayez de modifier vos critères de recherche
+                                    Essayez de modifier vos critères de
+                                    recherche
                                 </p>
                             </div>
                         ) : (
@@ -260,70 +186,61 @@ export default function HistoriquePage() {
                                             <TableRow key={sim.id}>
                                                 <TableCell>
                                                     {new Date(
-                                                        sim.date
-                                                    ).toLocaleDateString("fr-FR", {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    })}
+                                                        sim.simulation!.dateTraitement
+                                                    ).toLocaleDateString(
+                                                        "fr-FR",
+                                                        {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        }
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     {sim.montant.toLocaleString()}{" "}
                                                     €
                                                 </TableCell>
                                                 <TableCell>
-                                                    {sim.taux}%
+                                                    {sim.simulation!.taux}%
                                                 </TableCell>
                                                 <TableCell>
                                                     {sim.duree} mois (
-                                                    {(sim.duree / 12).toFixed(1)}{" "}
+                                                    {(sim.duree / 12).toFixed(
+                                                        1
+                                                    )}{" "}
                                                     ans)
                                                 </TableCell>
                                                 <TableCell>
                                                     {sim.mensualite
-                                                        ? `${sim.mensualite.toFixed(2)} €`
+                                                        ? `${sim.mensualite.toFixed(
+                                                              2
+                                                          )} $`
                                                         : "-"}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {getStatusBadge(sim.status)}
+                                                    {getStatusBadge(sim.statut)}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0"
-                                                            title="Voir"
-                                                            onClick={() =>
-                                                                handleView(sim.id)
+                                                        <SimulationDetailsModal
+                                                            simulation={sim}
+                                                        />
+                                                        {sim.statut !==
+                                                            "VALIDATED" && (
+                                                            <ValidateSimButton
+                                                                id={sim.id!}
+                                                                validateFunction={
+                                                                    handleValidated
+                                                                }
+                                                            />
+                                                        )}
+
+                                                        <DeleteSimButton
+                                                            id={sim.id!}
+                                                            deleteFunction={
+                                                                handleDeleted
                                                             }
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0"
-                                                            title="Dupliquer"
-                                                            onClick={() =>
-                                                                handleDuplicate(
-                                                                    sim.id
-                                                                )
-                                                            }
-                                                        >
-                                                            <Copy className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                                            title="Supprimer"
-                                                            onClick={() =>
-                                                                handleDelete(sim.id)
-                                                            }
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        />
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

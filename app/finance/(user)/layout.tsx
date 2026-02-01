@@ -1,5 +1,5 @@
 import { FinanceSidebar } from "@/src/components/FinanceSidebar";
-import { getUser } from "@/src/lib/auth-server";
+import { getUser } from "@/src/lib/auth-lib/auth-server";
 import { redirect } from "next/navigation";
 
 export default async function FinanceLayout({

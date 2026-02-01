@@ -22,14 +22,15 @@ import {
     FileX,
     Edit,
     Plus,
-    Eye,
-    Copy,
-    Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import prisma from "@/src/lib/prisma";
-import { getUser } from "@/src/lib/auth-server";
-import { unauthorized } from "next/navigation";
+import { getUser } from "@/src/lib/auth-lib/auth-server";
+import { redirect, unauthorized } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { DeleteSimButton } from "./_components/delete-sim-button";
+import { toast } from "sonner";
+import { SimulationDetailsModal } from "@/src/components/SimulationDetailsModal";
 
 type SimulationStatus = "VALIDATED" | "DRAFT" | "DELETED";
 
@@ -53,13 +54,15 @@ const getStatusBadge = (status: SimulationStatus) => {
 
 export default async function DashboardPage() {
     const user = await getUser();
+    if (!user) {
+        redirect("/finance/auth/login");
+    }
     const operateur = await prisma.operateur.findUnique({
         where: { userId: user?.id },
     });
     if (!operateur) {
         return unauthorized;
     }
-
     const grouped = await prisma.simulationResult.groupBy({
         by: ["statut"],
         where: {
@@ -71,14 +74,12 @@ export default async function DashboardPage() {
             _all: true,
         },
     });
-
     const stats = {
         total: 0,
         validated: 0,
         draft: 0,
         deleted: 0,
     };
-
     grouped.forEach((item) => {
         stats.total += item._count._all;
 
@@ -94,14 +95,26 @@ export default async function DashboardPage() {
             stats.deleted = item._count._all;
         }
     });
-
     const lastSimulations = await prisma.simulationResult.findMany({
         take: 5,
         orderBy: {
             createdAt: "desc",
         },
+        where: {
+            NOT: {
+                statut: "DELETED",
+            },
+        },
         select: {
             id: true,
+            clientId: true,
+            client: {
+                select: {
+                    nom: true,
+                    prenom: true,
+                    email: true,
+                },
+            },
             montant: true,
             duree: true,
             mensualite: true,
@@ -115,10 +128,25 @@ export default async function DashboardPage() {
                     taux: true,
                     typeTaux: true,
                     dateTraitement: true,
+                    operateurId: true,
                 },
             },
         },
     });
+
+    const handleDeleted = async (id: string) => {
+        "use server";
+        await prisma.simulationResult.update({
+            where: {
+                id,
+            },
+            data: {
+                statut: "DELETED",
+            },
+        });
+
+        revalidatePath("/finance");
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -274,9 +302,9 @@ export default async function DashboardPage() {
                                             <TableRow key={sim.id}>
                                                 <TableCell>
                                                     {new Date(
-                                                        sim.createdAt,
+                                                        sim.createdAt
                                                     ).toLocaleDateString(
-                                                        "fr-FR",
+                                                        "fr-FR"
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
@@ -294,30 +322,15 @@ export default async function DashboardPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0"
-                                                            title="Voir"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0"
-                                                            title="Dupliquer"
-                                                        >
-                                                            <Copy className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                                            title="Supprimer"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        <SimulationDetailsModal
+                                                            simulation={sim}
+                                                        />
+                                                        <DeleteSimButton
+                                                            id={sim.id}
+                                                            deleteFunction={
+                                                                handleDeleted
+                                                            }
+                                                        />
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

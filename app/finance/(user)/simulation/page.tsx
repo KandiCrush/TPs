@@ -33,6 +33,7 @@ import {
     RefreshCw,
     Save,
     Calculator,
+    Loader2,
 } from "lucide-react";
 import { ClientCombobox } from "@/src/components/ClientCombobox";
 import { ClientType } from "@/src/lib/z-type";
@@ -42,19 +43,24 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/src/components/ui/tooltip";
-import { generateSimulationPDF } from "@/src/lib/generateSimulationPDF";
+import { generateSimulationPDF } from "@/src/lib/sim-pdf/generateSimulationPDF";
 
-type TauxType = "annuel" | "mensuel";
+type TauxType = "ANNUEL" | "MENSUEL";
 
 export default function SimulationPage() {
     const [table, setTable] = useState<AmortissementRow[] | null>(null);
     const [param, setParam] = useState<Props | null>(null);
-    const [tauxType, setTauxType] = useState<TauxType>("annuel");
+    const [tauxType, setTauxType] = useState<TauxType>("ANNUEL");
     const [insuranceEnabled, setInsuranceEnabled] = useState(false);
     const [insuranceRate, setInsuranceRate] = useState("");
     const [client, setClient] = useState<ClientType | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [loadingTable, setLoadingTable] = useState<boolean>(false);
+    const [loadingPDF, setLoadingPDF] = useState<boolean>(false);
+    const [loadingExcel, setLoadingExcel] = useState<boolean>(false);
 
     const getFormData = async (form: HTMLFormElement) => {
+        setLoadingTable(true);
         const formData = new FormData(form);
 
         const data = {
@@ -72,6 +78,8 @@ export default function SimulationPage() {
             toast.warning("Les données doivent toutes être positives !", {
                 position: "top-center",
             });
+            setLoadingTable(false);
+            return;
         }
 
         try {
@@ -79,7 +87,7 @@ export default function SimulationPage() {
             if (data.taux) {
                 const tauxValue = Number(data.taux);
                 tauxMensuel =
-                    tauxType === "annuel" ? tauxValue / 1200 : tauxValue / 100;
+                    tauxType === "ANNUEL" ? tauxValue / 1200 : tauxValue / 100;
             }
 
             const result = await CalculAmortissement({
@@ -98,24 +106,28 @@ export default function SimulationPage() {
                 position: "top-center",
             });
         }
+        setLoadingTable(false);
     };
 
     const handleReset = () => {
         setTable(null);
         setParam(null);
-        setTauxType("annuel");
+        setTauxType("ANNUEL");
         setInsuranceEnabled(false);
         setInsuranceRate("");
     };
 
     const handleSaveSimulation = async () => {
+        setIsLoading(true);
+
         if (!client || !param || !table) {
             toast.info(
                 "Veuillez compléter la simulation avant de sauvegarder",
                 {
                     position: "top-center",
-                },
+                }
             );
+            setIsLoading(false);
             return;
         }
 
@@ -127,7 +139,7 @@ export default function SimulationPage() {
             body: JSON.stringify({
                 simulation: {
                     taux:
-                        tauxType == "annuel"
+                        tauxType == "ANNUEL"
                             ? param.taux * 1200
                             : param.taux * 100,
                     typeTaux: tauxType,
@@ -152,28 +164,35 @@ export default function SimulationPage() {
 
         if (result.error) {
             toast.error(result.message);
+            setIsLoading(false);
             return;
         }
 
+        setIsLoading(false);
         toast.success("Simulation enregistrée avec succès");
     };
 
     const handleExportPDF = async () => {
+        setLoadingPDF(true);
         if (!client) {
             toast.message("Veuillez sélectionner un client");
+            setLoadingPDF(false);
             return;
         }
         if (!param || !table) {
             toast.message("Veuillez effectuer une simulation");
+            setLoadingPDF(false);
             return;
         }
+
+        console.log(param);
 
         const blob = await generateSimulationPDF({
             client,
             simulation: {
                 montant: param.montant!,
                 taux: param.taux,
-                typeTaux: tauxType == "annuel" ? "ANNUEL" : "MENSUEL",
+                typeTaux: tauxType,
                 duree: param.duree!,
                 mensualite: param.mensualite!,
                 totalInterets: totalInterest,
@@ -183,6 +202,7 @@ export default function SimulationPage() {
             tableau: table,
         });
         const url = URL.createObjectURL(blob);
+        setLoadingPDF(false);
         window.open(url);
         console.log("Export PDF (UI only)");
     };
@@ -261,7 +281,7 @@ export default function SimulationPage() {
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem
-                                                    value="annuel"
+                                                    value="ANNUEL"
                                                     id="annuel"
                                                 />
                                                 <Label
@@ -273,7 +293,7 @@ export default function SimulationPage() {
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem
-                                                    value="mensuel"
+                                                    value="MENSUEL"
                                                     id="mensuel"
                                                 />
                                                 <Label
@@ -285,7 +305,7 @@ export default function SimulationPage() {
                                             </div>
                                         </RadioGroup>
                                         <p className="text-sm text-muted-foreground">
-                                            {tauxType === "annuel"
+                                            {tauxType === "ANNUEL"
                                                 ? "Le taux annuel sera converti automatiquement en taux mensuel pour le calcul"
                                                 : "Le taux mensuel sera utilisé directement dans les calculs"}
                                         </p>
@@ -323,7 +343,7 @@ export default function SimulationPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="taux">
                                             Taux d&apos;intérêt (
-                                            {tauxType === "annuel"
+                                            {tauxType === "ANNUEL"
                                                 ? "annuel"
                                                 : "mensuel"}
                                             ){" "}
@@ -338,17 +358,17 @@ export default function SimulationPage() {
                                             step={0.01}
                                             min={0}
                                             max={
-                                                tauxType === "annuel" ? 100 : 10
+                                                tauxType === "ANNUEL" ? 100 : 10
                                             }
                                             placeholder={
-                                                tauxType === "annuel"
+                                                tauxType === "ANNUEL"
                                                     ? "Ex: 3.5"
                                                     : "Ex: 0.29"
                                             }
                                             required
                                             defaultValue={
                                                 param
-                                                    ? tauxType === "annuel"
+                                                    ? tauxType === "ANNUEL"
                                                         ? param.taux * 120
                                                         : param.taux * 100
                                                     : ""
@@ -356,7 +376,7 @@ export default function SimulationPage() {
                                             disabled={!!table}
                                         />
                                         <p className="text-sm text-muted-foreground">
-                                            {tauxType === "annuel"
+                                            {tauxType === "ANNUEL"
                                                 ? "Taux annuel en pourcentage (ex: 3.5 pour 3.5%)"
                                                 : "Taux mensuel en pourcentage (ex: 0.29 pour 0.29%)"}
                                         </p>
@@ -468,7 +488,7 @@ export default function SimulationPage() {
                                                     value={insuranceRate}
                                                     onChange={(e) =>
                                                         setInsuranceRate(
-                                                            e.target.value,
+                                                            e.target.value
                                                         )
                                                     }
                                                     disabled={!!table}
@@ -481,7 +501,7 @@ export default function SimulationPage() {
                                                                 mois:{" "}
                                                                 <span className="text-primary">
                                                                     {insuranceMonthly.toFixed(
-                                                                        2,
+                                                                        2
                                                                     )}{" "}
                                                                     $
                                                                 </span>
@@ -500,7 +520,9 @@ export default function SimulationPage() {
                                             disabled={!!table}
                                         >
                                             <Calculator className="mr-2 h-4 w-4" />
-                                            Générer le tableau
+                                            {loadingTable
+                                                ? "Génération du tableau..."
+                                                : "Générer le tableau"}
                                         </Button>
                                         <section className="flex gap-3 flex-row">
                                             <Button
@@ -517,12 +539,15 @@ export default function SimulationPage() {
                                                     className="flex-1"
                                                     type="button"
                                                     variant="outline"
+                                                    disabled={isLoading}
                                                     onClick={
                                                         handleSaveSimulation
                                                     }
                                                 >
                                                     <Save className="mr-2 h-4 w-4" />
-                                                    Sauvegarder
+                                                    {isLoading
+                                                        ? "Enregistrement..."
+                                                        : "Sauvegarder"}
                                                 </Button>
                                             )}
                                         </section>
@@ -552,7 +577,7 @@ export default function SimulationPage() {
                                                 Taux ({tauxType}):
                                             </span>
                                             <span className="font-semibold">
-                                                {tauxType === "annuel"
+                                                {tauxType === "ANNUEL"
                                                     ? (
                                                           param.taux * 1200
                                                       ).toFixed(2)
@@ -567,7 +592,10 @@ export default function SimulationPage() {
                                             </span>
                                             <span className="font-semibold">
                                                 {param.duree} mois (
-                                                {(param.duree || 0) / 12} ans)
+                                                {(
+                                                    (param.duree || 0) / 12
+                                                ).toFixed(1)}{" "}
+                                                ans)
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
@@ -605,7 +633,7 @@ export default function SimulationPage() {
                                                         </span>
                                                         <span className="font-semibold">
                                                             {insuranceMonthly.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             $
                                                         </span>
@@ -616,7 +644,7 @@ export default function SimulationPage() {
                                                         </span>
                                                         <span className="font-semibold">
                                                             {insuranceTotal.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             $
                                                         </span>
@@ -668,10 +696,15 @@ export default function SimulationPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
+                                                disabled={loadingPDF}
                                                 onClick={handleExportPDF}
                                             >
                                                 <FileDown className="mr-2 h-4 w-4" />
-                                                PDF
+                                                {loadingPDF ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    "PDF"
+                                                )}
                                             </Button>
                                             <Button
                                                 variant="outline"
@@ -718,13 +751,13 @@ export default function SimulationPage() {
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.interet.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             $
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {row.mensualite.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             ${" "}
                                                             <Tooltip>
@@ -734,7 +767,7 @@ export default function SimulationPage() {
                                                                     <span>
                                                                         (+
                                                                         {row.assurance.toFixed(
-                                                                            2,
+                                                                            2
                                                                         )}
                                                                         $)
                                                                     </span>
@@ -748,13 +781,13 @@ export default function SimulationPage() {
 
                                                         <TableCell className="text-right">
                                                             {row.amortissement.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             $
                                                         </TableCell>
                                                         <TableCell className="text-right font-semibold">
                                                             {row.capitalRestant.toFixed(
-                                                                2,
+                                                                2
                                                             )}{" "}
                                                             $
                                                         </TableCell>
