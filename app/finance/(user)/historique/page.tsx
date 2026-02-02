@@ -72,6 +72,22 @@ export default function HistoriquePage() {
         return matchesSearch && matchesFilter;
     });
 
+    const handleValidatedLocal = (id: string) => {
+        setSimulations((prev) =>
+            prev.map((sim) =>
+                sim.id === id ? { ...sim, statut: "VALIDATED" } : sim
+            )
+        );
+    };
+
+    const handleDeletedLocal = (id: string) => {
+        setSimulations((prev) =>
+            prev.map((sim) =>
+                sim.id === id ? { ...sim, statut: "DELETED" } : sim
+            )
+        );
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -182,69 +198,82 @@ export default function HistoriquePage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {filteredSimulations.map((sim) => (
-                                            <TableRow key={sim.id}>
-                                                <TableCell>
-                                                    {new Date(
-                                                        sim.simulation!.dateTraitement
-                                                    ).toLocaleDateString(
-                                                        "fr-FR",
-                                                        {
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        }
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    {sim.montant.toLocaleString()}{" "}
-                                                    €
-                                                </TableCell>
-                                                <TableCell>
-                                                    {sim.simulation!.taux}%
-                                                </TableCell>
-                                                <TableCell>
-                                                    {sim.duree} mois (
-                                                    {(sim.duree / 12).toFixed(
-                                                        1
-                                                    )}{" "}
-                                                    ans)
-                                                </TableCell>
-                                                <TableCell>
-                                                    {sim.mensualite
-                                                        ? `${sim.mensualite.toFixed(
-                                                              2
-                                                          )} $`
-                                                        : "-"}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(sim.statut)}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <SimulationDetailsModal
-                                                            simulation={sim}
-                                                        />
-                                                        {sim.statut !==
-                                                            "VALIDATED" && (
-                                                            <ValidateSimButton
+                                        {filteredSimulations
+                                            .filter(
+                                                (sim) =>
+                                                    sim.statut !== "DELETED"
+                                            )
+                                            .map((sim) => (
+                                                <TableRow key={sim.id}>
+                                                    <TableCell>
+                                                        {new Date(
+                                                            sim.simulation!.dateTraitement
+                                                        ).toLocaleDateString(
+                                                            "fr-FR",
+                                                            {
+                                                                year: "numeric",
+                                                                month: "long",
+                                                                day: "numeric",
+                                                            }
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
+                                                        {sim.montant.toLocaleString()}{" "}
+                                                        €
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {sim.simulation!.taux}%
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {sim.duree} mois (
+                                                        {(
+                                                            sim.duree / 12
+                                                        ).toFixed(1)}{" "}
+                                                        ans)
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {sim.mensualite
+                                                            ? `${sim.mensualite.toFixed(
+                                                                  2
+                                                              )} $`
+                                                            : "-"}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {getStatusBadge(
+                                                            sim.statut
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <SimulationDetailsModal
+                                                                simulation={sim}
+                                                            />
+                                                            {sim.statut !==
+                                                                "VALIDATED" && (
+                                                                <ValidateSimButton
+                                                                    id={sim.id!}
+                                                                    validateFunction={
+                                                                        handleValidated
+                                                                    }
+                                                                    onValidated={
+                                                                        handleValidatedLocal
+                                                                    }
+                                                                />
+                                                            )}
+
+                                                            <DeleteSimButton
                                                                 id={sim.id!}
-                                                                validateFunction={
-                                                                    handleValidated
+                                                                deleteFunction={
+                                                                    handleDeleted
+                                                                }
+                                                                onDeleted={
+                                                                    handleDeletedLocal
                                                                 }
                                                             />
-                                                        )}
-
-                                                        <DeleteSimButton
-                                                            id={sim.id!}
-                                                            deleteFunction={
-                                                                handleDeleted
-                                                            }
-                                                        />
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                     </TableBody>
                                 </Table>
                             </div>

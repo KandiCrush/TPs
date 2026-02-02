@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import prisma from "./prisma";
 
 export const handleDeleted = async (id: string) => {
@@ -12,8 +11,6 @@ export const handleDeleted = async (id: string) => {
             statut: "DELETED",
         },
     });
-
-    revalidatePath("/finance");
 };
 
 export const handleValidated = async (id: string) => {
@@ -25,6 +22,4 @@ export const handleValidated = async (id: string) => {
             statut: "VALIDATED",
         },
     });
-
-    revalidatePath("/finance");
 };

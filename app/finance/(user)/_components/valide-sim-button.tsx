@@ -1,21 +1,20 @@
-"use client";
-
 import { Button } from "@/src/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export const ValidateSimButton = ({
     id,
     validateFunction,
+    onValidated,
 }: {
     id: string;
     validateFunction: (id: string) => Promise<void>;
+    onValidated: (id: string) => void;
 }) => {
-    const router = useRouter();
     const handleValidate = async () => {
         await validateFunction(id);
-        router.refresh();
+        onValidated(id);
     };
+
     return (
         <Button
             variant="ghost"
