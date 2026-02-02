@@ -29,7 +29,6 @@ import { getUser } from "@/src/lib/auth-lib/auth-server";
 import { redirect, unauthorized } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { DeleteSimButton } from "./_components/delete-sim-button";
-import { toast } from "sonner";
 import { SimulationDetailsModal } from "@/src/components/SimulationDetailsModal";
 
 type SimulationStatus = "VALIDATED" | "DRAFT" | "DELETED";

@@ -9,6 +9,7 @@ import {
     History,
     FileText,
     Building2,
+    Group,
 } from "lucide-react";
 
 const navigation = [
@@ -32,6 +33,11 @@ const navigation = [
         href: "/finance/documents",
         icon: FileText,
     },
+    {
+        name: "Simulation en groupe",
+        href: "/finance/groupe",
+        icon: Group,
+    },
 ];
 
 export function FinanceSidebar() {
@@ -43,9 +49,7 @@ export function FinanceSidebar() {
             <div className="flex h-16 items-center border-b px-6">
                 <div className="flex items-center gap-2">
                     <Building2 className="h-6 w-6 text-primary" />
-                    <span className="text-lg font-semibold">
-                        Finance Pro
-                    </span>
+                    <span className="text-lg font-semibold">Finance Pro</span>
                 </div>
             </div>
 
@@ -78,9 +82,7 @@ export function FinanceSidebar() {
 
             {/* Footer */}
             <div className="border-t p-4">
-                <p className="text-xs text-muted-foreground">
-                    Version 1.0.0
-                </p>
+                <p className="text-xs text-muted-foreground">Version 1.0.0</p>
             </div>
         </div>
     );
