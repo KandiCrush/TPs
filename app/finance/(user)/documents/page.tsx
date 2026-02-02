@@ -7,7 +7,6 @@ import {
     CardTitle,
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { Badge } from "@/src/components/ui/badge";
 import {
     Table,
     TableBody,
@@ -16,143 +15,94 @@ import {
     TableHeader,
     TableRow,
 } from "@/src/components/ui/table";
-import {
-    FileText,
-    FileSpreadsheet,
-    Download,
-    Eye,
-    Trash2,
-    Search,
-} from "lucide-react";
+import { FileText, FileSpreadsheet, Download, Search } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SimulationDocumentType } from "@/src/lib/z-type";
+import { simulationDocumentsSchema } from "@/src/lib/z-schema";
+import { toast } from "sonner";
 
-type DocumentType = "pdf" | "excel";
-type DocumentStatus = "ready" | "generating" | "error";
-
-interface Document {
-    id: string;
-    simulationId: string;
-    name: string;
-    type: DocumentType;
-    status: DocumentStatus;
-    createdAt: string;
-    size?: string;
-    montant?: number;
-}
-
-// Mock data
-const mockDocuments: Document[] = [
-    {
-        id: "1",
-        simulationId: "1",
-        name: "Tableau_amortissement_150000_2026-01-26.pdf",
-        type: "pdf",
-        status: "ready",
-        createdAt: "2026-01-26T10:30:00",
-        size: "245 KB",
-        montant: 150000,
-    },
-    {
-        id: "2",
-        simulationId: "1",
-        name: "Tableau_amortissement_150000_2026-01-26.xlsx",
-        type: "excel",
-        status: "ready",
-        createdAt: "2026-01-26T10:31:00",
-        size: "128 KB",
-        montant: 150000,
-    },
-    {
-        id: "3",
-        simulationId: "3",
-        name: "Tableau_amortissement_250000_2026-01-24.pdf",
-        type: "pdf",
-        status: "ready",
-        createdAt: "2026-01-24T14:20:00",
-        size: "312 KB",
-        montant: 250000,
-    },
-    {
-        id: "4",
-        simulationId: "4",
-        name: "Tableau_amortissement_120000_2026-01-23.pdf",
-        type: "pdf",
-        status: "ready",
-        createdAt: "2026-01-23T09:15:00",
-        size: "198 KB",
-        montant: 120000,
-    },
-    {
-        id: "5",
-        simulationId: "6",
-        name: "Tableau_amortissement_100000_2026-01-20.xlsx",
-        type: "excel",
-        status: "generating",
-        createdAt: "2026-01-20T16:45:00",
-        montant: 100000,
-    },
-    {
-        id: "6",
-        simulationId: "8",
-        name: "Tableau_amortissement_200000_2026-01-15.pdf",
-        type: "pdf",
-        status: "error",
-        createdAt: "2026-01-15T11:00:00",
-        montant: 200000,
-    },
-];
+type DocumentType = "PDF" | "EXCEL";
 
 const getTypeIcon = (type: DocumentType) => {
-    return type === "pdf" ? (
+    return type === "PDF" ? (
         <FileText className="h-5 w-5 text-red-600" />
     ) : (
         <FileSpreadsheet className="h-5 w-5 text-green-600" />
     );
 };
 
-const getStatusBadge = (status: DocumentStatus) => {
-    const variants = {
-        ready: "default",
-        generating: "secondary",
-        error: "destructive",
-    } as const;
-
-    const labels = {
-        ready: "Prêt",
-        generating: "Génération...",
-        error: "Erreur",
-    };
-
-    return (
-        <Badge variant={variants[status] || "default"}>{labels[status]}</Badge>
-    );
-};
-
 export default function DocumentsPage() {
     const [searchTerm, setSearchTerm] = useState("");
-
-    const filteredDocuments = mockDocuments.filter(
-        (doc) =>
-            doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doc.montant?.toString().includes(searchTerm)
+    const [documents, setDocuments] = useState<SimulationDocumentType[] | null>(
+        null
     );
 
-    const handleDownload = (id: string) => {
-        console.log("Télécharger document", id);
+    useEffect(() => {
+        const fetchDocuments = async () => {
+            const response = await fetch("/api/document");
+            const docs = await response.json();
+
+            const validatedDocs = simulationDocumentsSchema.safeParse(
+                docs.documents
+            );
+
+            if (!validatedDocs.success) {
+                console.log(validatedDocs.error);
+
+                toast.warning("Les données reçues sont incompatibles.");
+                return;
+            }
+
+            setDocuments(validatedDocs.data!);
+        };
+        fetchDocuments();
+    }, []);
+
+    const filteredDocuments = documents
+        ? documents.filter(
+              (doc) =>
+                  doc.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  doc.type?.toString().includes(searchTerm)
+          )
+        : [];
+
+    const handleDownload = async (id: string, name: string) => {
+        const response = await fetch("/api/document/download", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id }),
+        });
+
+        if (!response.ok) {
+            console.error("Erreur téléchargement");
+            return;
+        }
+
+        const blob = await response.blob();
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+
+        URL.revokeObjectURL(url);
     };
 
-    const handleView = (id: string) => {
-        console.log("Voir document", id);
-    };
+    // const handleView = (id: string) => {
+    //     console.log("Voir document", id);
+    // };
 
-    const handleDelete = (id: string) => {
-        console.log("Supprimer document", id);
-    };
+    // const handleDelete = (id: string) => {
+    //     console.log("Supprimer document", id);
+    // };
 
-    const pdfCount = filteredDocuments.filter((d) => d.type === "pdf").length;
+    const pdfCount = filteredDocuments.filter((d) => d.type === "PDF").length;
     const excelCount = filteredDocuments.filter(
-        (d) => d.type === "excel"
+        (d) => d.type === "EXCEL"
     ).length;
 
     return (
@@ -257,10 +207,8 @@ export default function DocumentsPage() {
                                             <TableHead>
                                                 Nom du fichier
                                             </TableHead>
-                                            <TableHead>Simulation</TableHead>
+
                                             <TableHead>Date</TableHead>
-                                            <TableHead>Taille</TableHead>
-                                            <TableHead>Statut</TableHead>
                                             <TableHead className="text-right">
                                                 Actions
                                             </TableHead>
@@ -273,16 +221,12 @@ export default function DocumentsPage() {
                                                     {getTypeIcon(doc.type)}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
-                                                    {doc.name}
+                                                    {doc.nom}
                                                 </TableCell>
-                                                <TableCell>
-                                                    {doc.montant
-                                                        ? `${doc.montant.toLocaleString()} €`
-                                                        : "-"}
-                                                </TableCell>
+
                                                 <TableCell>
                                                     {new Date(
-                                                        doc.createdAt
+                                                        doc.createdAt!
                                                     ).toLocaleDateString(
                                                         "fr-FR",
                                                         {
@@ -294,46 +238,25 @@ export default function DocumentsPage() {
                                                         }
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    {doc.size || "-"}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(doc.status)}
-                                                </TableCell>
+
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        {doc.status ===
-                                                            "ready" && (
-                                                            <>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-8 w-8 p-0"
-                                                                    title="Voir"
-                                                                    onClick={() =>
-                                                                        handleView(
-                                                                            doc.id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Eye className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-8 w-8 p-0"
-                                                                    title="Télécharger"
-                                                                    onClick={() =>
-                                                                        handleDownload(
-                                                                            doc.id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Download className="h-4 w-4" />
-                                                                </Button>
-                                                            </>
-                                                        )}
                                                         <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0"
+                                                            title="Télécharger"
+                                                            onClick={() =>
+                                                                handleDownload(
+                                                                    doc.id!,
+                                                                    doc.nom
+                                                                )
+                                                            }
+                                                        >
+                                                            <Download className="h-4 w-4" />
+                                                        </Button>
+
+                                                        {/* <Button
                                                             variant="ghost"
                                                             size="sm"
                                                             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
@@ -345,7 +268,7 @@ export default function DocumentsPage() {
                                                             }
                                                         >
                                                             <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        </Button> */}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

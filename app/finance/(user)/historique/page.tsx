@@ -16,7 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/src/components/ui/table";
-import { Eye, Copy, Trash2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { useEffect, useState } from "react";
 import { SimulationResultType } from "@/src/lib/z-type";

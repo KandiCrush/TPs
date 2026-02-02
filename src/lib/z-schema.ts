@@ -62,3 +62,16 @@ export const simulationResultSchema = z.object({
     createdAt: z.date().optional(),
 });
 export const simulationResultsSchema = z.array(simulationResultSchema);
+
+export const simulationDocumentSchema = z.object({
+    id: z.string().uuid().optional(),
+    nom: z.string().min(1, "Le nom du document est requis"),
+    type: z.enum(["PDF", "EXCEL"]),
+    fichier: z.any().optional(),
+    createdAt: z
+        .string()
+        .datetime()
+        .transform((val) => new Date(val)),
+});
+
+export const simulationDocumentsSchema = z.array(simulationDocumentSchema);
