@@ -207,12 +207,36 @@ export default function SimulationPage() {
         console.log("Export PDF (UI only)");
     };
 
-    const handleExportExcel = () => {
-        if (!client) {
-            toast.message("Veuillez sélectionner un client");
+    const handleExportExcel = async () => {
+        if (!client || !param || !table) {
+            toast.message("Simulation incomplète");
             return;
         }
-        console.log("Export Excel (UI only)");
+
+        setLoadingExcel(true);
+
+        const response = await fetch("/api/document/excel", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                client,
+                params: param,
+                tauxType,
+                assuranceRate: insuranceEnabled ? Number(insuranceRate) : 0,
+                table,
+            }),
+        });
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "simulation.xlsx";
+        a.click();
+
+        URL.revokeObjectURL(url);
+        setLoadingExcel(false);
     };
 
     const calculateInsuranceCost = () => {
@@ -712,7 +736,11 @@ export default function SimulationPage() {
                                                 onClick={handleExportExcel}
                                             >
                                                 <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                                Excel
+                                                {loadingExcel ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    "Excel"
+                                                )}
                                             </Button>
                                         </div>
                                     </div>
