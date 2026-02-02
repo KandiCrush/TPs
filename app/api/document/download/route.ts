@@ -16,9 +16,21 @@ export async function POST(req: Request) {
         return new Response("Document introuvable", { status: 404 });
     }
 
+    // 🔹 Déterminer le type MIME
+    let contentType = "application/octet-stream";
+
+    if (document.type === "PDF") {
+        contentType = "application/pdf";
+    }
+
+    if (document.type === "EXCEL") {
+        contentType =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    }
+
     return new Response(document.fichier, {
         headers: {
-            "Content-Type": "application/pdf",
+            "Content-Type": contentType,
             "Content-Disposition": `attachment; filename="${document.nom}"`,
         },
     });
