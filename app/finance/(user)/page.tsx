@@ -60,7 +60,7 @@ export default async function DashboardPage() {
         where: { userId: user?.id },
     });
     if (!operateur) {
-        return unauthorized;
+        unauthorized();
     }
     const grouped = await prisma.simulationResult.groupBy({
         by: ["statut"],

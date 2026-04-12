@@ -5,7 +5,7 @@
 export type SimulationPDFClient = {
   nom: string;
   prenom: string;
-  email?: string;
+  email?: string | null;
 };
 
 export type SimulationPDFSimulation = {

@@ -10,11 +10,11 @@ export const DeleteSimButton = ({
 }: {
     id: string;
     deleteFunction: (id: string) => Promise<void>;
-    onDeleted: (id: string) => void;
+    onDeleted?: (id: string) => void;
 }) => {
     const handleDelete = async () => {
         await deleteFunction(id);
-        onDeleted(id);
+        onDeleted?.(id);
     };
 
     return (
