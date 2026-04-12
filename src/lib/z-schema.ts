@@ -28,7 +28,7 @@ export const clientSchema = z.object({
     prenom: z
         .string("Le prénom est invalide")
         .min(3, "Le prénom doit contenir au moins 3 caractères"),
-    email: z.email("Le adresse email est invalid").optional(),
+    email: z.email("Le adresse email est invalid").optional().nullable(),
     telephone: z
         .string("Le numéro de téléphone est invalide")
         .min(10, "Le numéro de téléphone doit contenir au moins 10 caractères")
